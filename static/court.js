@@ -16,9 +16,61 @@ const polledEvents = new Set();
 let pollingId, historyRequest = 0, rejectedPollPass, retryPollAt = 0;
 const isPrivateId = id => /^[0-9a-f]{32}$/.test(id);
 const passPrompt = "请出示法庭通行令以查阅私人案卷。";
-let soundOn = false, archive, transition, deliberated = false;
-const sounds = Object.fromEntries(['gavel','type','objection'].map(name=>[name,new Audio('static/'+name+'.wav')]));
-Object.values(sounds).forEach(sound=>{sound.volume=.24;});
+let soundOn = false, soundWanted = false, archive, transition, deliberated = false;
+const SOUND_V='20261126z';
+const soundLevel={type:.14,answer:.16,ask:.18,placard:.18,ruling:.18,gavel:.28,objection:.3,gavel3:.34,gasp:.22,uproar:.24,murmur:.07,pass:.32,fail:.32,hung:.28};
+const soundFile={gavel:'static/gavel.wav',type:'static/type.wav',objection:'static/objection.wav',gavel3:'static/gavel3.mp3',murmur:'static/murmur.mp3',gasp:'static/gasp.mp3',uproar:'static/uproar.mp3',pass:'static/verdict-pass.mp3',fail:'static/verdict-fail.mp3',hung:'static/verdict-hung.mp3',ask:'static/ask-pop.mp3',placard:'static/placard.mp3',ruling:'static/ruling.mp3',answer:'static/answer.mp3'};
+const sounds={};
+let soundCtx, duckTimer, lastPlacard=0, bedWanted=false;
+
+function loadSound(name) {
+  if (sounds[name]) return sounds[name];
+  const node=new Audio(soundFile[name]+'?v='+SOUND_V);
+  node.preload='auto';
+  node.volume=soundLevel[name]??.24;
+  if (name==='murmur') node.loop=true;
+  sounds[name]=node;
+  return node;
+}
+function loadAllSounds() {
+  Object.keys(soundFile).forEach(loadSound);
+}
+function fadeBed(target, step=.03) {
+  const bed=sounds.murmur;
+  if (!bed) return;
+  const tick=()=>{
+    const cur=bed.volume;
+    const dir=target>cur?step:-step;
+    const next=cur+dir;
+    if (Math.abs(next-target)<=step || (dir>0 && next>=target) || (dir<0 && next<=target)) {
+      bed.volume=Math.max(0,target);
+      if (target<=0) {bed.pause();bed.currentTime=0;}
+      return;
+    }
+    bed.volume=Math.max(0,next);
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+function startBed() {
+  bedWanted=true;
+  if (!soundOn || frozen || stage.reduced.matches) return;
+  const bed=loadSound('murmur');
+  if (bed.paused) {bed.volume=0;bed.play().catch(()=>{});}
+  fadeBed(soundLevel.murmur,.015);
+}
+function stopBed() {
+  bedWanted=false;
+  if (!sounds.murmur) return;
+  fadeBed(0,.025);
+}
+function duckBed() {
+  const bed=sounds.murmur;
+  if (!bed || bed.paused || !bedWanted || !soundOn) return;
+  bed.volume=Math.min(bed.volume,.02);
+  clearTimeout(duckTimer);
+  duckTimer=setTimeout(()=>{if(bedWanted&&soundOn&&!frozen) fadeBed(soundLevel.murmur,.015);},500);
+}
 
 const sessions = {preview:['法庭预览','Court preview'],live:['实时庭审','Live trial'],fixture:['示范庭审','Demo trial'],
   lodged:['候审中','Awaiting Trial'],filed:['开庭','Court in Session'],replay:['案卷重播','Case replay'],freeze:['庭审定格','Freeze frame']};
@@ -55,9 +107,85 @@ async function api(url,options) {
 }
 function tone(name) {
   if (!soundOn || frozen) return;
-  const sound=sounds[name];
-  sound.currentTime=0;
-  sound.play().catch(()=>{});
+  if (name==='murmur') {startBed();return;}
+  const src=loadSound(name);
+  duckBed();
+  try {
+    const node=src.cloneNode();
+    node.volume=soundLevel[name]??.24;
+    node.play().catch(()=>{});
+  } catch {
+    src.currentTime=0;
+    src.play().catch(()=>{});
+  }
+}
+function tickPlacard() {
+  const now=performance.now();
+  if (now-lastPlacard<80) return;
+  lastPlacard=now;
+  tone('placard');
+}
+function verdictCue() {
+  const key=voteKey(current?.tally?.finding);
+  return key==='无罪'?'pass':key==='有罪'?'fail':'hung';
+}
+function paintSound() {
+  const button=$('#sound');
+  if (!button) return;
+  button.textContent=soundOn?t('声音开启','Sound on'):t('声音关闭','Sound off');
+  button.setAttribute('aria-pressed',String(soundOn));
+}
+function readSoundPref() {
+  try {return localStorage.getItem('court-sound')==='on';} catch {return false;}
+}
+function writeSoundPref(on) {
+  try {localStorage.setItem('court-sound',on?'on':'off');} catch {}
+}
+async function unlockSound() {
+  const Ctx=window.AudioContext||window.webkitAudioContext;
+  if (Ctx) {
+    soundCtx=soundCtx||new Ctx();
+    if (soundCtx.state==='suspended') await soundCtx.resume().catch(()=>{});
+    try {
+      const buf=soundCtx.createBuffer(1,1,22050);
+      const src=soundCtx.createBufferSource();
+      src.buffer=buf;
+      src.connect(soundCtx.destination);
+      src.start(0);
+    } catch {}
+  }
+  loadAllSounds();
+  await Promise.all(Object.entries(sounds).map(([name,node])=>{
+    node.muted=true;
+    node.volume=0;
+    return node.play().then(()=>{
+      node.pause();
+      node.currentTime=0;
+      node.muted=false;
+      node.volume=soundLevel[name]??.24;
+    }).catch(()=>{
+      node.muted=false;
+      node.volume=soundLevel[name]??.24;
+    });
+  }));
+}
+async function setSound(on) {
+  if (on) {
+    await unlockSound();
+    soundOn=true;
+    soundWanted=true;
+    writeSoundPref(true);
+    paintSound();
+    if (bedWanted) startBed();
+    return true;
+  }
+  soundOn=false;
+  soundWanted=false;
+  writeSoundPref(false);
+  stopBed();
+  Object.values(sounds).forEach(node=>{try{node.pause();node.currentTime=0;}catch{}});
+  paintSound();
+  return false;
 }
 function setMotion(key) {
   motion=key;
@@ -101,7 +229,7 @@ async function order(key) {
   const now=performance.now();
   stage.state.strike=now+460;
   stage.state.shake=now+330;
-  tone('gavel');
+  tone(key==='verdict'||key==='rise'?'gavel3':'gavel');
   showStamp('order');
   await hold(stage.reduced.matches ? 280 : 540);
   showStamp(null);
@@ -116,11 +244,13 @@ async function deliberate() {
   if (deliberated) return;
   deliberated=true;
   stage.state.whisper=!frozen ? !stage.reduced.matches : query.get('freeze')==='jury';
+  if (stage.state.whisper && !frozen && !stage.reduced.matches) startBed();
   actor('clerk',null);
   showSpeech(()=>t('陪审团正在评议…','The jury is deliberating…'));
   if (!frozen) {
     await hold(stage.reduced.matches ? 300 : 1750);
     stage.state.whisper=false;
+    stopBed();
   }
 }
 function pointText(p,kind) {
@@ -243,7 +373,8 @@ function showStamp(key) {
 function objection(key,show) {
   if(!show||frozen||stage.reduced.matches) return Promise.resolve();
   showStamp(key);
-  if(key==='objection') {stage.state.shake=performance.now()+265;tone('objection');}
+  if(key==='objection') {stage.state.shake=performance.now()+265;tone('objection');setTimeout(()=>tone('gasp'),110);}
+  else tone('ruling');
   return hold(460).then(()=>showStamp(null));
 }
 function hold(duration) {
@@ -379,6 +510,7 @@ function answerLabel(answer) {
 }
 async function speakBallot(ballot,max=1550) {
   actor(ballot,ballot.seat);
+  tickPlacard();
   await type(()=>finding(ballot.vote)+' · '+courtLine(ballot.reason),max,
     {emotion:ballot.emotion,reactionText:ballot.reason});
 }
@@ -423,6 +555,7 @@ async function perform(event) {
     awaitingAsk=d.id;
     answerPending=null;
     actor('dock','dock');
+    tone('ask');
     showSpeech(()=>local(d.question));
     witnessOptions();
     record(()=>t(...beats.witness),event,()=>[
@@ -436,6 +569,7 @@ async function perform(event) {
     answerPending=null;
     witnessOptions();
     actor('dock','dock');
+    tone('answer');
     const text=()=>t(...beats.answer)+' · '+answerLabel(d);
     showSpeech(text);
     record(()=>t(...beats.witness),event,()=>[{text:text()}]);
@@ -487,12 +621,14 @@ async function perform(event) {
       {text:t('决定性事实 · ','Deciding fact · ')+(local(d.deciding_fact)||'—')},
       {text:t('翻票条件 · ','Would flip if · ')+(local(d.would_flip_if)||'—')},
     ]);
-    if(current.mode==='uk') stage.refreshTags();
+    if(current.mode==='uk') {stage.refreshTags();tickPlacard();}
     else await speakBallot(d,2400);
   } else if(kind==='revote') {
     current.jury=d.ballots;
     for(const ballot of d.ballots) stage.state.votes.set(ballot.seat,ballot.vote);
     stage.refreshTags();
+    tickPlacard();
+    if((d.ballots||[]).filter(ballot=>ballot.changed).length>=2) tone('gasp');
     record(()=>t(...beats.revote),event,()=>d.ballots.map(ballot=>({text:jurorName(ballot)+' · '+
       finding(ballot.vote)+(ballot.changed?' · '+t(...beats.changed):'')+' · '+local(ballot.reason)+
       (ballot.change_basis?' · '+local(ballot.change_basis):'')})));
@@ -510,11 +646,13 @@ async function perform(event) {
     const text=()=>t('计票结果 · ','Tally · ')+finding(d.finding)+' · '+score(d)+
       (d.abstained?t(' · '+d.abstained+' 人未表决',' · '+d.abstained+' abstained'):'');
     record(()=>t('书记员 · 唱票结束','Clerk · Tally complete'),event,()=>[{text:text()}]);
-    if(!(frozen && query.get('freeze')==='jury')) await type(text,1100);
+    if(!(frozen && query.get('freeze')==='jury')) {tickPlacard();await type(text,1100);}
   } else if(kind==='verdict') {
     phase('judge');
     actor('judge','judge');
     await order('verdict');
+    if(soundOn && !frozen) await hold(stage.reduced.matches ? 200 : 1260);
+    tone(verdictCue());
     const text=()=>t('本庭宣判 · ','Verdict · ')+finding(current.tally.finding)+'\n'+local(d.sentence);
     record(()=>t(...phases.judge),event,()=>[{text:text()},...(d.recommendation?[
       {text:t(...beats.recommendation)+' · '+d.recommendation+' · '+local(d.recommendation_reason)},
@@ -537,6 +675,7 @@ async function perform(event) {
     phase('error');
     actor('clerk',null);
     setMotion('error');
+    tone('ruling');
     showSpeech(()=>errorText(d.text));
     record(()=>t(...motions.error),event,()=>[{text:errorText(d.text)}]);
     refreshHistory(true);
@@ -851,6 +990,7 @@ async function replay(id,freeze,filed=false,trial,reset=false) {
     Object.assign(stage.state,{whisper:false,strike:0,shake:0,reactionUntil:0,hasSpeech:false});
     transition=null;
     deliberated=false;
+    stopBed();
     awaitingAsk=undefined;
     witnessQuestion=null;
     answerPending=null;
@@ -993,10 +1133,16 @@ $('#language').addEventListener('click',()=>{
   history.replaceState(null,'',url);
   localize();
 });
-$('#sound').addEventListener('click',()=>{
-  soundOn=!soundOn;
-  $('#sound').textContent=soundOn?t('声音开启','Sound on'):t('声音关闭','Sound off');
-  $('#sound').setAttribute('aria-pressed',soundOn);
+soundWanted=readSoundPref();
+paintSound();
+$('#sound').addEventListener('click',event=>{
+  event.preventDefault();
+  setSound(!soundOn);
+});
+document.addEventListener('visibilitychange',()=>{
+  if (document.hidden) {
+    if (sounds.murmur && !sounds.murmur.paused) sounds.murmur.pause();
+  } else if (soundOn && bedWanted && !frozen) startBed();
 });
 $('#skip').addEventListener('click',()=>{
   stage.state.speechStart=-Infinity;
