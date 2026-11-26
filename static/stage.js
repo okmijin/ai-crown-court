@@ -258,6 +258,7 @@ const stage = (() => {
     });
   }
   refreshTags();
+  let lastOrigin='', lastTransform='';
   function draw(t) {
     const animate=!reduced.matches&&!state.frozen;
     const bump=animate && t<state.shake && t>state.strike-315 ? Math.round(Math.sin(t/17)*2) : 0;
@@ -265,8 +266,11 @@ const stage = (() => {
     const age = t-state.speechStart;
     const zoom = animate && speaker && age>=0 && age<1850 ? .32*Math.sin(Math.PI*age/1850)**2 : 0;
     const origin = speaker || [240,148];
-    world.style.transformOrigin = (origin[0]/4.8)+'% '+((origin[1]-35)/canvas.height*100)+'%';
-    world.style.transform = zoom || bump ? 'translate('+bump+'px,'+Math.abs(bump)+'px) scale('+ (1+zoom) +')' : '';
+    // Only touch the style when it changes, so idle frames cost no style/layout work.
+    const nextOrigin = (origin[0]/4.8)+'% '+((origin[1]-35)/canvas.height*100)+'%';
+    const nextTransform = zoom || bump ? 'translate('+bump+'px,'+Math.abs(bump)+'px) scale('+ (1+zoom).toFixed(4) +')' : 'none';
+    if (nextOrigin!==lastOrigin) {world.style.transformOrigin=nextOrigin;lastOrigin=nextOrigin;}
+    if (nextTransform!==lastTransform) {world.style.transform=nextTransform;lastTransform=nextTransform;}
     drawRoom();
     sprite(240,86,['white','pale','shade','gown'],'judge',t,1);
     stand(187,77,106,'sand');

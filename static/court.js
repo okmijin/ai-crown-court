@@ -13,11 +13,12 @@ let lastSpeech = () => t('法庭已经准备就绪。提交案由，或观看示
 let activeActor = ['clerk',null,false], phaseName, stampText, session = 'preview', motion = '', problem;
 let pending, lodging = false, lodgeLanguage, switching = false, playbackDone, legacyPass = '';
 const polledEvents = new Set();
+let skipBatch = 0;
 let pollingId, historyRequest = 0, rejectedPollPass, retryPollAt = 0;
 const isPrivateId = id => /^[0-9a-f]{32}$/.test(id);
 const passPrompt = "请出示法庭通行令以查阅私人案卷。";
 let soundOn = false, soundWanted = false, archive, transition, deliberated = false;
-const SOUND_V='20261127d';
+const SOUND_V='20261127e';
 const soundLevel={type:.14,answer:.16,ask:.18,placard:.18,ruling:.18,gavel:.28,objection:.3,gavel3:.34,gasp:.22,uproar:.24,bed:.85,open:.95,close:.95,pass:.32,fail:.32,hung:.28};
 const soundFile={gavel:'static/gavel.wav',type:'static/type.wav',objection:'static/objection.wav',gavel3:'static/gavel3.mp3',bed:'static/court-bed.mp3',gasp:'static/gasp.mp3',uproar:'static/uproar.mp3',pass:'static/verdict-pass.mp3',fail:'static/verdict-fail.mp3',hung:'static/verdict-hung.mp3',ask:'static/ask-pop.mp3',placard:'static/placard.mp3',ruling:'static/ruling.mp3',answer:'static/answer.mp3',open:'static/court-open.mp3',close:'static/court-close.mp3'};
 const sounds={};
@@ -280,13 +281,23 @@ function readSoundPref() {
 function writeSoundPref(on) {
   try {localStorage.setItem('court-sound',on?'on':'off');} catch {}
 }
+function makeSoundCtx() {
+  const Ctx=window.AudioContext||window.webkitAudioContext;
+  return Ctx ? new Ctx() : undefined;
+}
+function warmSoundCtx() {
+  // Building an AudioContext costs ~30 ms; do it while the finger is still down so the tap itself stays fast.
+  if (soundCtx) return;
+  try {if (navigator.audioSession) navigator.audioSession.type='playback';} catch {}
+  try {soundCtx=makeSoundCtx();} catch {}
+}
 function unlockSound() {
   // Runs synchronously inside the tap so iOS Safari keeps the user gesture.
   try {if (navigator.audioSession) navigator.audioSession.type='playback';} catch {}
   const Ctx=window.AudioContext||window.webkitAudioContext;
   if (Ctx) {
     try {
-      soundCtx=soundCtx||new Ctx();
+      soundCtx=soundCtx||makeSoundCtx();
       if (soundCtx.state!=='running') soundCtx.resume().catch(()=>{});
       const buf=soundCtx.createBuffer(1,1,22050);
       const src=soundCtx.createBufferSource();
@@ -882,6 +893,8 @@ async function enqueue(event) {
     if(next.type==='error') queue.length=0;
     if(!['status','done','error'].includes(next.type)) setMotion('running');
     await perform(next);
+    // While skipping, yield now and then so taps and paints are not starved.
+    if(fastForward && ++skipBatch%6===0) await new Promise(resolve=>setTimeout(resolve,0));
     if(!queue.length&&!witnessQuestion&&!['done','error'].includes(next.type)) {
       stage.state.active=null;
       stage.state.ceremony=false;
@@ -1372,17 +1385,43 @@ function paintSkip() {
   const button=$('#skip');
   if(button) button.hidden=!playing || frozen;
 }
+let skipQueued=false;
 $('#skip').addEventListener('click',()=>{
+  if(skipQueued) return;
   fastForward=true;
+  // Audio stays inside the tap so iOS keeps the user gesture.
   stopOpen();
   playClose();
   stage.state.whisper=false;
   stage.state.speechStart=-Infinity;
   stage.state.reactionUntil=stage.state.strike=stage.state.shake=0;
   showStamp(null);
-  finishFrame?.();
-  if(!playing && current?.verdict && !frozen) {fastForward=false;renderVerdict(current.verdict);$('#verdict').scrollIntoView({block:'start'});}
+  const button=$('#skip');
+  button.classList.add('busy');
+  skipQueued=true;
+  // Paint the press first, then fast-forward the remaining records.
+  requestAnimationFrame(()=>setTimeout(()=>{
+    skipQueued=false;
+    button.classList.remove('busy');
+    finishFrame?.();
+    if(!playing && current?.verdict && !frozen) {fastForward=false;renderVerdict(current.verdict);$('#verdict').scrollIntoView({block:'start'});}
+  },0));
 });
+// Instant pressed state on touch: iOS only applies :active when a touch listener exists.
+document.addEventListener('touchstart',()=>{},{passive:true});
+document.addEventListener('pointerdown',event=>{
+  if (event.target?.closest?.('#sound') && !soundOn) warmSoundCtx();
+  const target=event.target?.closest?.('button,a,summary,label');
+  if(!target || target.disabled) return;
+  target.classList.add('pressing');
+  const release=()=>{
+    setTimeout(()=>target.classList.remove('pressing'),90);
+    document.removeEventListener('pointerup',release,true);
+    document.removeEventListener('pointercancel',release,true);
+  };
+  document.addEventListener('pointerup',release,true);
+  document.addEventListener('pointercancel',release,true);
+},{capture:true,passive:true});
 $('#case').addEventListener('input',updateCase);
 $('#case-form').addEventListener('submit',event=>{event.preventDefault();if(replayOnly) lodge();else submit(false);});
 $('#fixture').addEventListener('click',()=>submit(true));
