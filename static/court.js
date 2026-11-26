@@ -17,9 +17,9 @@ let pollingId, historyRequest = 0, rejectedPollPass, retryPollAt = 0;
 const isPrivateId = id => /^[0-9a-f]{32}$/.test(id);
 const passPrompt = "请出示法庭通行令以查阅私人案卷。";
 let soundOn = false, soundWanted = false, archive, transition, deliberated = false;
-const SOUND_V='20261126z';
-const soundLevel={type:.14,answer:.16,ask:.18,placard:.18,ruling:.18,gavel:.28,objection:.3,gavel3:.34,gasp:.22,uproar:.24,murmur:.07,pass:.32,fail:.32,hung:.28};
-const soundFile={gavel:'static/gavel.wav',type:'static/type.wav',objection:'static/objection.wav',gavel3:'static/gavel3.mp3',murmur:'static/murmur.mp3',gasp:'static/gasp.mp3',uproar:'static/uproar.mp3',pass:'static/verdict-pass.mp3',fail:'static/verdict-fail.mp3',hung:'static/verdict-hung.mp3',ask:'static/ask-pop.mp3',placard:'static/placard.mp3',ruling:'static/ruling.mp3',answer:'static/answer.mp3'};
+const SOUND_V='20261127b';
+const soundLevel={type:.14,answer:.16,ask:.18,placard:.18,ruling:.18,gavel:.28,objection:.3,gavel3:.34,gasp:.22,uproar:.24,murmur:.07,open:.5,pass:.32,fail:.32,hung:.28};
+const soundFile={gavel:'static/gavel.wav',type:'static/type.wav',objection:'static/objection.wav',gavel3:'static/gavel3.mp3',murmur:'static/murmur.mp3',gasp:'static/gasp.mp3',uproar:'static/uproar.mp3',pass:'static/verdict-pass.mp3',fail:'static/verdict-fail.mp3',hung:'static/verdict-hung.mp3',ask:'static/ask-pop.mp3',placard:'static/placard.mp3',ruling:'static/ruling.mp3',answer:'static/answer.mp3',open:'static/court-open.mp3'};
 const sounds={};
 let soundCtx, duckTimer, lastPlacard=0, bedWanted=false, fastForward=false;
 
@@ -308,7 +308,8 @@ async function order(key) {
   const now=performance.now();
   stage.state.strike=now+460;
   stage.state.shake=now+330;
-  tone(key==='verdict'||key==='rise'?'gavel3':'gavel');
+  if(key==='rise') stopBed();
+  tone(key==='rise'?'open':key==='verdict'?'gavel3':'gavel');
   showStamp('order');
   await hold(stage.reduced.matches ? 280 : 540);
   showStamp(null);
