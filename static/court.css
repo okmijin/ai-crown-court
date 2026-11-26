@@ -165,3 +165,8 @@ body[data-replay=true] #case-form{margin:0}
 #skip:not([hidden]){border:1px solid var(--gold);padding:6px 12px;font-size:13px;font-weight:700;background:#111827}
 #sound-hint{position:fixed;z-index:9;top:72px;right:12px;margin:0;padding:8px 12px;background:#111827;color:var(--gold);border:1px solid var(--gold);font-size:13px;max-width:calc(100% - 24px)}
 #sound-hint[hidden]{display:none}
+.continuation{margin-top:26px;padding-top:14px;border-top:1px solid #967450}
+.continuation .continue-open{border:1px solid #71382b;background:transparent;padding:10px 16px;font-weight:800;min-height:44px}
+.continue-form label{display:block;font-weight:700;margin:10px 0 6px}
+.continue-form textarea{width:100%;box-sizing:border-box;min-height:96px;font:inherit;padding:8px;border:1px solid #967450;background:#f7ecd4;color:#2a2427}
+.continue-form .continue-send{margin-top:10px;width:100%;justify-content:center;color:#241d20}

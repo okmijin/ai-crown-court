@@ -80,6 +80,7 @@ function fadeBed(target, step=.03) {
 function startBed() {
   bedWanted=true;
   if (!soundOn || frozen) return;
+  if (openPlaying()) {setTimeout(()=>{if(bedWanted) startBed();},Math.max(50,openUntil-performance.now()+30));return;}
   if (webAudioReady('murmur')) {
     if (sounds.murmur && !sounds.murmur.paused) {try{sounds.murmur.pause();}catch{}}
     if (!bedSource) {
@@ -157,10 +158,20 @@ async function api(url,options) {
   }
   return response.json();
 }
+let openUntil=0, openStop=null;
+function openPlaying() {return performance.now()<openUntil;}
+function stopOpen() {
+  openUntil=0;
+  try {openStop?.();} catch {}
+  openStop=null;
+}
 function tone(name) {
   if (!soundOn || frozen || fastForward) return;
+  // The opening cue (6–9 s) owns the room: nothing else may cut across it.
+  if (openPlaying()) return;
   if (name==='murmur') {startBed();return;}
-  duckBed();
+  if (name==='open') stopBed();
+  else duckBed();
   window.__courtTones=(window.__courtTones||0)+1;
   if (webAudioReady(name)) {
     try {
@@ -171,6 +182,10 @@ function tone(name) {
       source.buffer=buffers[name];
       source.connect(gain);
       source.start();
+      if (name==='open') {
+        openUntil=performance.now()+buffers[name].duration*1000;
+        openStop=()=>source.stop();
+      }
       return;
     } catch {}
   }
@@ -178,7 +193,12 @@ function tone(name) {
   try {
     const node=src.cloneNode();
     node.volume=soundLevel[name]??.24;
-    node.play().catch(()=>{src.currentTime=0;src.play().catch(()=>{});});
+    if (name==='open') {
+      openUntil=performance.now()+(Number.isFinite(src.duration)&&src.duration>0?src.duration:9)*1000;
+      openStop=()=>node.pause();
+      node.addEventListener('ended',()=>{openUntil=0;openStop=null;},{once:true});
+    }
+    node.play().catch(()=>{if(name==='open'){openUntil=0;openStop=null;}src.currentTime=0;src.play().catch(()=>{});});
   } catch {
     src.currentTime=0;
     src.play().catch(()=>{});
@@ -261,6 +281,7 @@ function setSound(on) {
   soundWanted=false;
   writeSoundPref(false);
   soundHint(false);
+  stopOpen();
   stopBed();
   Object.values(sounds).forEach(node=>{try{node.pause();node.currentTime=0;}catch{}});
   paintSound();
@@ -276,7 +297,44 @@ function phase(name) {
   document.querySelectorAll('#steps span').forEach(step=>step.classList.toggle('current',step.dataset.phase===name));
 }
 function refreshSession() {
-  $('#session-label').textContent=t(...sessions[session])+(current?' · '+t(...modes[current.mode]):'');
+  $('#session-label').textContent=t(...sessions[session])+(current?' · '+t(...modes[current.mode]):'')+
+    (current?.round>1?' · '+roundLabel(current.round):'');
+}
+const MAX_ROUNDS=3;
+function roundLabel(round) {
+  return t('第 '+round+'/'+MAX_ROUNDS+' 次审理','Hearing '+round+' of '+MAX_ROUNDS)+(round>=MAX_ROUNDS?t(' · 终审',' · Final'):'');
+}
+function originalCharge(trial) {
+  return [...String(trial.case||'').split('\n\n')[0].trim()].slice(0,200).join('');
+}
+function continuationDesk(page) {
+  const round=current.round||1;
+  const box=element('section',undefined,page);box.className='continuation';
+  element('h3',roundLabel(round),box);
+  if(!replayOnly || !isPrivateId(current.id) || current.state==='running') return;
+  if(round>=MAX_ROUNDS) {
+    element('p',t('本案已终审结案，不再接受续审。','This was the final hearing. The case is closed.'),box);
+    return;
+  }
+  const open=element('button',t('补充案情 · 续审 ▸','Add facts · Rehear ▸'),box);
+  open.type='button';open.className='continue-open';
+  const form=element('div',undefined,box);form.hidden=true;form.className='continue-form';
+  const label=element('label',t('修改原案，或补充新的条件（第 '+(round+1)+'/'+MAX_ROUNDS+' 次审理'+(round+1>=MAX_ROUNDS?'，即终审':'')+'）',
+    'Amend the case or add new conditions (hearing '+(round+1)+' of '+MAX_ROUNDS+')'),form);
+  label.htmlFor='amendment';
+  const field=element('textarea',undefined,form);field.id='amendment';field.maxLength=1000;field.rows=4;
+  element('p',t('法庭会带着前几次的案由和判决摘要重新开庭。','The court reopens with the earlier charge and verdicts as background.'),form).className='field-note';
+  const send=element('button',t('提交续审 ▸','File the rehearing ▸'),form);
+  send.type='button';send.className='primary continue-send';
+  open.addEventListener('click',()=>{form.hidden=false;open.hidden=true;field.focus();});
+  send.addEventListener('click',async()=>{
+    const amendment=field.value.trim();
+    if(!amendment || [...field.value].length>1000) return showError('补充案情请写 1 至 1000 字。');
+    send.disabled=true;
+    try {
+      await lodge({charge:originalCharge(current),amendment,round:round+1,parent_case_id:current.id,lang:current.lang});
+    } finally {send.disabled=false;}
+  });
 }
 function stageView(trial,view) {
   current={...trial,jury:[],tally:null,verdict:null,lens:null};
@@ -308,7 +366,6 @@ async function order(key) {
   const now=performance.now();
   stage.state.strike=now+460;
   stage.state.shake=now+330;
-  if(key==='rise') stopBed();
   tone(key==='rise'?'open':key==='verdict'?'gavel3':'gavel');
   showStamp('order');
   await hold(stage.reduced.matches ? 280 : 540);
@@ -523,6 +580,7 @@ function renderVerdict(verdict) {
   verdict.conditions.forEach(item=>element('li',local(item),actions));
   element('h3',t('判词','Judge’s remarks'),page);
   element('p',local(verdict.sentence),page);
+  continuationDesk(page);
   element('small',disclaimer(),page);
   element('a','/court skill by Alex Chen (@nocodealex) (MIT)',element('small',credit(),page)).href='https://github.com/alexyc9381/court-skill';
   page.hidden=false;
@@ -903,7 +961,7 @@ async function refreshHistory(reload=false) {
       const row=element('div',undefined,list);row.className='history-row';
       replayLink(element('a',local(trial.summary),row),trial.id);
       const text=trial.finding?finding(trial.finding)+' · '+trial.score.join('–'):t(...motions[trial.state==='error'?'error':'running']);
-      const meta=element('span',t(...modes[trial.mode])+' · '+text,row);
+      const meta=element('span',t(...modes[trial.mode])+(trial.round>1?' · '+roundLabel(trial.round):'')+' · '+text,row);
       meta.title=new Date(trial.time).toLocaleString(lang==='zh'?'zh-CN':'en-GB');
     }
     if(replayOnly && !authed) element('p',errorText(passPrompt),list);
@@ -1015,11 +1073,14 @@ async function pollLodge() {
 }
 const clerkErrors={pass:'法庭通行令不正确。',locked:'通行令错误次数过多，请十五分钟后再试。',config:'书记官尚未就位，请稍后再试。',
   day_cap:'今日立案名额已满，请明日再试。',forward:'书记官无法联系法庭，请稍后再试。',charge:'请输入 1 至 200 字案由。',background:'案情陈述最多 4000 字。',
-  rate:'提交过于频繁，请稍后再试。',answered:'这个问题已经作答。',ask:'找不到该证人问题。',option:'请选择有效选项。',missing:'找不到该案。'};
-async function lodge() {
-  if(lodging || pending) return;
+  rate:'提交过于频繁，请稍后再试。',round:'续审次数已用完，或上一次审理尚未结束。',amendment:'补充案情请写 1 至 1000 字。',answered:'这个问题已经作答。',ask:'找不到该证人问题。',option:'请选择有效选项。',missing:'找不到该案。'};
+async function lodge(continuation) {
+  if(lodging) return;
+  if(pending) return showError('上一件案子还在审理，请等它结束后再续审。');
   $('#form-error').hidden=true;
-  const rawCharge=$('#charge').value, rawBackground=$('#background').value, pass=$('#court-pass').value.trim().toLowerCase();
+  const rawCharge=continuation?continuation.charge:$('#charge').value, rawBackground=continuation?'':$('#background').value,
+    pass=$('#court-pass').value.trim().toLowerCase();
+  if(continuation && privateCase.test(continuation.amendment)) return showError('案由触发隐私门禁。请删除敏感信息后再开庭。');
   const charge=rawCharge.trim(), background=rawBackground.trim();
   if(!charge || [...rawCharge].length>200) return showError('请输入 1 至 200 字案由。');
   if([...rawBackground].length>4000) return showError('案情陈述最多 4000 字。');
@@ -1028,7 +1089,8 @@ async function lodge() {
   }
   const savedSession=!pass && courtSession();
   if(!pass && !savedSession) return showError('请出示法庭通行令。');
-  const language=lodgeLanguage || lang;
+  const language=continuation?.lang==='en'||continuation?.lang==='zh'?continuation.lang:lodgeLanguage || lang;
+  const extra=continuation?{parent_case_id:continuation.parent_case_id,round:continuation.round,amendment:continuation.amendment}:{};
   lodging=true;
   $('#lodge-case').disabled=true;
   try {
@@ -1037,7 +1099,7 @@ async function lodge() {
     let response, result={};
     try {
       response=await fetch(CLERK,{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',
-        body:JSON.stringify({charge,background,lang:language,case_id,...(pass?{pass}:{session:savedSession})})});
+        body:JSON.stringify({charge,background,lang:language,case_id,...extra,...(pass?{pass}:{session:savedSession})})});
       result=await response.json().catch(()=>({}));
     } catch {
       return showError('书记官未能立案，请重试。');
@@ -1059,7 +1121,16 @@ async function lodge() {
     pending={case_id:result.case_id||case_id,submittedAt};
     try {localStorage.setItem('court-pending-case',JSON.stringify(pending));} catch {}
     waitingDesk(false);
-    previewRise({id:pending.case_id,mode:'uk',case:charge,seats:Array.from({length:12},(_,seat)=>seat)},'lodged');
+    if(continuation) {
+      $('#verdict').hidden=true;
+      transcript.length=0;
+      $('#entries').replaceChildren();
+      stage.state.votes.clear();
+      transition=null;
+      deliberated=false;
+    }
+    previewRise({id:pending.case_id,mode:'uk',case:charge,round:continuation?.round,seats:Array.from({length:12},(_,seat)=>seat)},'lodged');
+    if(continuation) {history.replaceState(null,'',urlFor(pending.case_id));scrollTo({top:0});}
     refreshHistory(true);
     schedulePoll();
   } finally {
@@ -1087,6 +1158,7 @@ async function replay(id,freeze,filed=false,trial,reset=false) {
     transition=null;
     deliberated=false;
     fastForward=false;
+    stopOpen();
     stopBed();
     awaitingAsk=undefined;
     witnessQuestion=null;
@@ -1257,6 +1329,7 @@ function paintSkip() {
 }
 $('#skip').addEventListener('click',()=>{
   fastForward=true;
+  stopOpen();
   stopBed();
   stage.state.whisper=false;
   stage.state.speechStart=-Infinity;
