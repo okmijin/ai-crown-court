@@ -6,10 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#171c29">
   <title>AI 法庭 · The Courtroom</title>
-  <link rel="stylesheet" href="static/court.css?v=20261126s">
-  <script defer src="static/locale.js?v=20261126s"></script>
-  <script defer src="static/stage.js?v=20261126s"></script>
-  <script defer src="static/court.js?v=20261126s"></script>
+  <link rel="stylesheet" href="static/court.css?v=20261126x">
+  <script defer src="static/locale.js?v=20261126x"></script>
+  <script defer src="static/stage.js?v=20261126x"></script>
+  <script defer src="static/court.js?v=20261126x"></script>
 </head>
 <body data-replay="true">
   <header class="mast">
@@ -71,6 +71,7 @@
         <div class="dialogue">
           <div class="speaker"><strong id="speaker">书记员</strong><small id="speaker-en">CLERK</small></div>
           <p id="speech">法庭已经准备就绪。提交案由，或观看一场示范庭审。</p>
+          <div id="witness" class="witness-options" hidden></div>
           <div class="dialogue-tools"><span id="motion-status" role="status"></span><button type="button" id="skip" hidden>跳过动画 / 看全文 <span aria-hidden="true">▾</span></button></div>
         </div>
         <nav id="steps" class="steps" aria-label="庭审阶段">

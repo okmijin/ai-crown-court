@@ -155,3 +155,9 @@ body[data-replay=true] #case-form{margin:0}
 #court-pass{display:block;width:100%;font:inherit;font-size:16px;color:inherit;border:1px solid var(--line);border-radius:0;margin:7px 0 10px;padding:11px;background:var(--dark);letter-spacing:.2em}
 #lodge-desk label.remember{display:flex;gap:8px;align-items:center;font-weight:500;font-size:13px;color:var(--muted);margin-bottom:12px;cursor:pointer}
 #lodge-desk label.remember input{width:18px;height:18px;accent-color:var(--gold)}
+
+.witness-options{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.witness-options button,.witness-options span{border:1px solid #ac8053;padding:6px 10px;color:var(--gold)}
+.witness-options button{min-height:44px;background:#111827}
+.witness-options button:focus-visible{outline:2px solid var(--gold)}
+.witness-active .dock-tag{background:#49351e;color:#fff0c4;outline:1px solid var(--gold)}

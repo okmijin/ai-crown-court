@@ -4,8 +4,10 @@ const $ = selector => document.querySelector(selector);
 const replayOnly = document.body.dataset.replay === 'true';
 const hashId = /^#[0-9a-f]{32}$/.test(location.hash) ? location.hash.slice(1) : null;
 const linkedTrial = query.get('trial') ?? hashId;
-const eventNames = ['status','clerk','opening','rebuttal','summing','juror','tally','verdict','done','error'];
+const eventNames = ['status','clerk','opening','rebuttal','summing','juror','tally','lens','ask','answer','revote','verdict','done','error'];
 const queue = [], transcript = [];
+let previewRiseId, ritualTyping, witnessQuestion, awaitingAsk, answerPending = null;
+const openingRise = {zh:'全体起立 · All rise。开庭。',en:'All rise. Court is in session.'};
 let current, stream, playing = false, finishFrame, frozen = false;
 let lastSpeech = () => t('法庭已经准备就绪。提交案由，或观看示范。','The court is ready. Submit a case or watch the demo.');
 let activeActor = ['clerk',null,false], phaseName, stampText, session = 'preview', motion = '', problem;
@@ -70,7 +72,7 @@ function refreshSession() {
   $('#session-label').textContent=t(...sessions[session])+(current?' · '+t(...modes[current.mode]):'');
 }
 function stageView(trial,view) {
-  current={...trial,jury:[],tally:null,verdict:null};
+  current={...trial,jury:[],tally:null,verdict:null,lens:null};
   session=view;
   document.body.classList.add('live');
   $('#petition').hidden=true;
@@ -88,6 +90,7 @@ function actor(name,active,ceremony=false) {
   $('#speaker-en').textContent=typeof name==='object'&&lang==='zh'?name.english:'';
   if (stage.state.active!==active) stage.state.hasSpeech=false;
   stage.state.active=active;
+  $('#stage-world').classList.toggle('witness-active',active==='dock');
   stage.state.ceremony=ceremony;
   stage.refreshTags();
 }
@@ -172,12 +175,18 @@ function showSpeech(getText) {
   lastSpeech=getText;
   $('#speech').textContent=getText();
 }
+function liveQuestions() {
+  return ['live','filed','lodged'].includes(session);
+}
+function liveQuestionQueued() {
+  return liveQuestions() && queue.some(event=>event.type==='ask');
+}
 function type(getText, max=9400, {emotion, reactionText, cues=[]}={}) {
   lastSpeech=getText;
   const started=performance.now();
   stage.state.speechStart=started;
   stage.state.hasSpeech=true;
-  const still=frozen || switching || stage.reduced.matches;
+  const still=frozen || switching || stage.reduced.matches || liveQuestionQueued();
   const initialCue=still ? cues.at(-1) : cues[0];
   react(initialCue?.text ?? reactionText ?? getText(),initialCue?.emotion ?? emotion);
   const speech=$('#speech'), button=$('#skip');
@@ -188,7 +197,7 @@ function type(getText, max=9400, {emotion, reactionText, cues=[]}={}) {
     return Promise.resolve();
   }
   const chars=[...text];
-  const duration=Math.min(max,Math.max(380,chars.length*28));
+  const duration=Math.min(max,Math.max(380,chars.length*19));
   button.hidden=false;
   stage.state.typing=true;
   return new Promise(resolve=>{
@@ -238,7 +247,7 @@ function objection(key,show) {
   return hold(460).then(()=>showStamp(null));
 }
 function hold(duration) {
-  if(switching) return Promise.resolve();
+  if(switching || liveQuestionQueued()) return Promise.resolve();
   $('#skip').hidden=false;
   return new Promise(resolve=>{
     const finish=()=>{
@@ -267,6 +276,10 @@ function renderVerdict(verdict) {
   }
   element('p',t('案由 · ','Case · ')+local(current.case_display||current.case),page);
   element('p',t('指控 · ','Charge · ')+charge(),page);
+  if(verdict.recommendation) {
+    element('h3',t(...beats.recommendation),page);
+    element('p',verdict.recommendation+' · '+local(verdict.recommendation_reason),page);
+  }
   element('h3',t('陪审团如何表决','How the jury voted'),page);
   if(tally.abstained) element('p',t(tally.abstained+' 人未表决。',tally.abstained+' abstained.'),page);
   const table=element('table',undefined,page);
@@ -276,7 +289,7 @@ function renderVerdict(verdict) {
   for(const ballot of current.jury) {
     const row=element('tr',undefined,body);
     element('td',jurorName(ballot),row);
-    element('td',finding(ballot.vote),row);
+    element('td',finding(ballot.vote)+(ballot.changed?' · '+t(...beats.changed):''),row);
     const cell=element('td',courtLine(ballot.reason),row);
     for(const cite of ballot.cites) {
       cell.append(' ');
@@ -304,9 +317,75 @@ function renderVerdict(verdict) {
   page.hidden=false;
 }
 
+function previewRise(trial, view) {
+  stageView(trial,view);
+  previewRiseId=trial.id;
+  enqueue({type:'clerk',preview:true,data:{phase:'opening',text:openingRise,ceremony:true}});
+}
+
+function lensParagraphs(lens) {
+  return [
+    {text:local(lens.core_decision)},
+    ...['stated_facts','assumptions','unknowns'].flatMap(key => [
+      {text:t(...beats[key])+ ' · '+(lens[key].map(local).join(' / ')||'—')},
+    ]),
+    ...lens.key_disputes.map(dispute=>({text:[local(dispute.issue),t(...roles.prosecution)+' · '+local(dispute.crown),
+      t(...roles.defense)+' · '+local(dispute.defence)].join('\n')})),
+  ];
+}
+function witnessOptions() {
+  const panel=$('#witness');
+  panel.replaceChildren();
+  panel.hidden=!witnessQuestion;
+  if(!witnessQuestion) return;
+  const question=witnessQuestion;
+  const answered=event=>event.type==='answer' && event.data.ask.id===question.id;
+  const live=liveQuestions() && awaitingAsk===question.id &&
+    !['done','error'].includes(current.state) &&
+    !current.events?.some(answered) && !queue.some(answered);
+  for(const option of question.options) {
+    const label=local(option.label);
+    const selected=answerPending===option.id;
+    const item=element(live?'button':'span',selected?label+t(' · 等待确认',' · Pending'):label,panel);
+    if(!live) continue;
+    item.type='button';
+    item.disabled=answerPending!==null;
+    item.setAttribute('aria-pressed',String(selected));
+    item.addEventListener('click',async()=>{
+      if(witnessQuestion!==question || answerPending!==null) return;
+      answerPending=option.id;
+      witnessOptions();
+      try {
+        if(replayOnly) {
+          await privateData('/answer',{id:current.case_id||current.id,ask_id:question.id,option:option.id});
+        } else {
+          await api('/api/trials/'+current.id+'/answer',{
+            method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({id:question.id,option:option.id}),
+          });
+        }
+      } catch(error) {
+        if(witnessQuestion===question) {
+          answerPending=null;
+          witnessOptions();
+          showError(clerkErrors[error.message] || error.message);
+        }
+      }
+    });
+  }
+}
+function answerLabel(answer) {
+  return local(answer.ask.options.find(option=>option.id===answer.option)?.label) || t(...beats.unknown);
+}
+async function speakBallot(ballot,max=1550) {
+  actor(ballot,ballot.seat);
+  await type(()=>finding(ballot.vote)+' · '+courtLine(ballot.reason),max,
+    {emotion:ballot.emotion,reactionText:ballot.reason});
+}
+
 async function perform(event) {
   const {type:kind,data:d}=event;
-  if(!['rebuttal','status'].includes(kind)) showStamp(null);
+  if(kind!=='status') showStamp(null);
   if(kind==='status') {
     phase(d.phase==='juror'?'jury':d.phase);
     actor('clerk',null);
@@ -316,18 +395,58 @@ async function perform(event) {
     phase(d.phase);
     const ceremony=d.ceremony ?? (typeof d.text==='string'&&d.text.startsWith('全体起立'));
     actor('clerk','clerk',ceremony);
-    if(ceremony) await order(d.phase==='judge'?'verdict':'rise');
-    if(d.phase==='rebuttal') await order('cross');
-    if(d.phase==='jury' && current.mode==='uk') await order('summing-end');
-    record(()=>t(...roles.clerk)+' · '+t(...phases[d.phase]),event,()=>[{text:courtLine(d.text)}]);
-    await type(()=>courtLine(d.text));
-    if(d.phase==='jury') await deliberate();
+    if(!event.preview) record(()=>t(...roles.clerk)+' · '+t(...phases[d.phase]),event,()=>[{text:courtLine(d.text)}]);
+    if(!event.preview && ceremony && d.phase==='opening' && previewRiseId===current.id) {
+      previewRiseId=null;
+      return;
+    }
+    if(ceremony) {
+      showSpeech(()=>d.phase==='opening' ? local(openingRise) : courtLine(d.text));
+      await order(d.phase==='judge'?'verdict':'rise');
+    } else {
+      if(d.phase==='rebuttal') await order('cross');
+      if(d.phase==='jury' && current.mode==='uk') await order('summing-end');
+      if(!queue.some(next=>next.type==='opening') || d.phase!=='opening') {
+        ritualTyping=d.phase==='opening';
+        await type(()=>courtLine(d.text),750);
+        ritualTyping=false;
+      }
+    }
+    if(d.phase==='jury' && !deliberated) await deliberate();
+  } else if(kind==='lens') {
+    current.lens=d;
+    awaitingAsk=d.ask?.id;
+    record(()=>t(...beats.lens),event,()=>lensParagraphs(d));
+    if(!frozen && !d.ask && !queue.some(next=>next.type==='opening')) showSpeech(()=>local(d.core_decision));
+  } else if(kind==='ask') {
+    witnessQuestion=d;
+    awaitingAsk=d.id;
+    answerPending=null;
+    actor('dock','dock');
+    showSpeech(()=>local(d.question));
+    witnessOptions();
+    record(()=>t(...beats.witness),event,()=>[
+      {text:local(d.question)},{text:d.options.map(option=>local(option.label)).join(' / ')},
+      {text:local(d.why_it_matters)},
+    ]);
+    if(!liveQuestions() && !frozen) await hold(700);
+  } else if(kind==='answer') {
+    awaitingAsk=undefined;
+    witnessQuestion=null;
+    answerPending=null;
+    witnessOptions();
+    actor('dock','dock');
+    const text=()=>t(...beats.answer)+' · '+answerLabel(d);
+    showSpeech(text);
+    record(()=>t(...beats.witness),event,()=>[{text:text()}]);
+    if(!frozen) await hold(liveQuestions()?320:600);
   } else if(kind==='opening'||kind==='rebuttal') {
     phase(kind);
     actor(d.side,d.side);
     const paragraphs=()=>{
       const points=d.points.map(p=>({text:pointText(p,kind),id:refId(kind,d.side,p.number)}));
       if(d.speech) points.unshift({text:local(d.speech)});
+      if(d.objection) points.push({text:local(d.objection.claim)+' · '+t(...stamps[d.objection.ruling])});
       const extra=local(kind==='opening'?d.concession:d.issue||d.key_point);
       if(extra) points.push({text:(kind==='opening'?t('承认 · ','Concession · '):t('关键点 · ','Issue · '))+extra});
       return points;
@@ -335,12 +454,12 @@ async function perform(event) {
     record(()=>t(...roles[d.side])+' · '+t(...phases[kind]),event,paragraphs);
     if(kind==='rebuttal') {
       await order('cross');
-      const contested=d.points.some(p=>!p.survives);
-      if(frozen&&contested) showStamp('objection');
-      else {
-        await objection('objection',contested);
-        await objection('sustained',contested);
-        await objection('overruled',d.points.some(p=>p.survives));
+      if(d.objection) {
+        actor(d.objection.by,d.objection.by);
+        await objection('objection',true);
+        await type(()=>local(d.objection.claim),1250);
+        if(frozen) showStamp(d.objection.ruling);
+        else await objection(d.objection.ruling,true);
       }
     }
     const cues=[];
@@ -351,40 +470,56 @@ async function perform(event) {
         offset += [...pointText(point,kind)].length+1;
       }
     }
-    await type(()=>paragraphs().map(p=>p.text).join('\n'),9400,{emotion:d.emotion,cues});
+    await type(()=>paragraphs().map(p=>p.text).join('\n'),kind==='opening'?6500:4900,{emotion:d.emotion,cues});
   } else if(kind==='summing') {
     phase(kind);
     actor('judge','judge');
     record(()=>t(...phases.summing),event,()=>[{text:local(d.speech)}]);
-    await type(()=>local(d.speech),9400,{emotion:d.emotion,reactionText:d.speech});
+    await type(()=>local(d.speech),4900,{emotion:d.emotion,reactionText:d.speech});
     await order('summing-end');
   } else if(kind==='juror') {
     await deliberate();
     current.jury.push(d);
     stage.state.votes.set(d.seat,d.vote);
     phase('jury');
-    actor(d,d.seat);
     record(()=>jurorName(d)+' · '+finding(d.vote),event,()=>[
       {text:courtLine(d.reason)},
       {text:t('决定性事实 · ','Deciding fact · ')+(local(d.deciding_fact)||'—')},
       {text:t('翻票条件 · ','Would flip if · ')+(local(d.would_flip_if)||'—')},
     ]);
-    await type(()=>finding(d.vote)+' · '+courtLine(d.reason),2400,{emotion:d.emotion,reactionText:d.reason});
-    if(!frozen&&stage.reduced.matches) await new Promise(resolve=>setTimeout(resolve,240));
+    if(current.mode==='uk') stage.refreshTags();
+    else await speakBallot(d,2400);
+  } else if(kind==='revote') {
+    current.jury=d.ballots;
+    for(const ballot of d.ballots) stage.state.votes.set(ballot.seat,ballot.vote);
+    stage.refreshTags();
+    record(()=>t(...beats.revote),event,()=>d.ballots.map(ballot=>({text:jurorName(ballot)+' · '+
+      finding(ballot.vote)+(ballot.changed?' · '+t(...beats.changed):'')+' · '+local(ballot.reason)+
+      (ballot.change_basis?' · '+local(ballot.change_basis):'')})));
   } else if(kind==='tally') {
     current.tally=d;
-    actor('clerk','clerk');
+    if(current.mode==='uk' && (!frozen || query.get('freeze')==='jury')) {
+      if(!frozen) await hold(400);
+      const focus=d.focus||current.jury.slice(0,2).map(ballot=>ballot.seat);
+      for(const seat of frozen?focus.slice(0,1):focus) {
+        const ballot=current.jury.find(item=>item.seat===seat);
+        if(ballot) await speakBallot(ballot);
+      }
+    }
+    if(!(frozen && query.get('freeze')==='jury')) actor('clerk','clerk');
     const text=()=>t('计票结果 · ','Tally · ')+finding(d.finding)+' · '+score(d)+
       (d.abstained?t(' · '+d.abstained+' 人未表决',' · '+d.abstained+' abstained'):'');
     record(()=>t('书记员 · 唱票结束','Clerk · Tally complete'),event,()=>[{text:text()}]);
-    await type(text);
+    if(!(frozen && query.get('freeze')==='jury')) await type(text,1100);
   } else if(kind==='verdict') {
     phase('judge');
     actor('judge','judge');
     await order('verdict');
     const text=()=>t('本庭宣判 · ','Verdict · ')+finding(current.tally.finding)+'\n'+local(d.sentence);
-    record(()=>t(...phases.judge),event,()=>[{text:text()}]);
-    await type(text,9400,{emotion:d.emotion,reactionText:d.sentence});
+    record(()=>t(...phases.judge),event,()=>[{text:text()},...(d.recommendation?[
+      {text:t(...beats.recommendation)+' · '+d.recommendation+' · '+local(d.recommendation_reason)},
+    ]:[])]);
+    await type(text,5200,{emotion:d.emotion,reactionText:d.sentence});
     current.verdict=d;
     if(frozen) renderVerdict(d);
   } else if(kind==='done') {
@@ -395,6 +530,10 @@ async function perform(event) {
     if(current.verdict&&!frozen) renderVerdict(current.verdict);
     refreshHistory(true);
   } else if(kind==='error') {
+    awaitingAsk=undefined;
+    witnessQuestion=null;
+    answerPending=null;
+    witnessOptions();
     phase('error');
     actor('clerk',null);
     setMotion('error');
@@ -403,15 +542,26 @@ async function perform(event) {
     refreshHistory(true);
   }
 }
+function nextPlayable(events) {
+  const next=events[0];
+  if(!next) return -1;
+  const needsLens=next.type==='opening' && next.data.await_lens && !current.lens;
+  if(needsLens || (awaitingAsk && !['ask','answer','error'].includes(next.type))) {
+    return events.findIndex(event=>['lens','ask','answer','error'].includes(event.type));
+  }
+  return 0;
+}
 async function enqueue(event) {
   queue.push(event);
+  if((event.type==='opening' && ritualTyping) || (event.type==='ask' && liveQuestions())) finishFrame?.();
   if(playing) return;
   playing=true;
-  while(queue.length) {
-    const next=queue.shift();
+  for(let index=nextPlayable(queue);index>=0;index=nextPlayable(queue)) {
+    const [next]=queue.splice(index,1);
+    if(next.type==='error') queue.length=0;
     if(!['status','done','error'].includes(next.type)) setMotion('running');
     await perform(next);
-    if(!queue.length&&!['done','error'].includes(next.type)) {
+    if(!queue.length&&!witnessQuestion&&!['done','error'].includes(next.type)) {
       stage.state.active=null;
       stage.state.ceremony=false;
       stage.refreshTags();
@@ -549,13 +699,22 @@ async function submit(fixture) {
     const data=new FormData(form);
     const {id}=await api('/api/trials'+(fixture?'/fixture':''), {
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(fixture?{}:{case:data.get('case'),mode:data.get('mode')}),
+      body:JSON.stringify(fixture?{lang}:{case:data.get('case'),mode:data.get('mode'),lang}),
     });
-    const trial=await trialData(id);
+    const mode=fixture?'uk':data.get('mode')||'uk';
+    const trial={id,mode,case:fixture?'':data.get('case'),seats:Array.from({length:12},(_,seat)=>seat)};
     history.replaceState(null,'',urlFor(id));
-    stageView(trial,fixture?'fixture':'live');
-    setMotion('waiting');
+    if(mode==='uk') previewRise(trial,fixture?'fixture':'live');
+    else stageView(trial,'live');
     watch(id);
+    if(fixture) {
+      trialData(id).then(record=>{
+        if(current?.id!==id) return;
+        current.case=record.case;
+        current.case_display=record.case_display;
+        refreshRecordHeader();
+      }).catch(()=>{});
+    }
     refreshHistory(true);
   } catch(error) {
     showError(error.message);
@@ -597,6 +756,8 @@ async function pollLodge() {
         history.replaceState(null,'',urlFor(trial.id));
         pollingId=trial.id;
       } else if(!frozen) {
+        current.state=trial.state;
+        current.events=trial.events;
         for(const event of trial.events) {
           if(polledEvents.has(event.id)) continue;
           polledEvents.add(event.id);
@@ -623,7 +784,8 @@ async function pollLodge() {
   schedulePoll();
 }
 const clerkErrors={pass:'法庭通行令不正确。',locked:'通行令错误次数过多，请十五分钟后再试。',config:'书记官尚未就位，请稍后再试。',
-  day_cap:'今日立案名额已满，请明日再试。',forward:'书记官无法联系法庭，请稍后再试。',charge:'请输入 1 至 200 字案由。',background:'案情陈述最多 4000 字。'};
+  day_cap:'今日立案名额已满，请明日再试。',forward:'书记官无法联系法庭，请稍后再试。',charge:'请输入 1 至 200 字案由。',background:'案情陈述最多 4000 字。',
+  rate:'提交过于频繁，请稍后再试。',answered:'这个问题已经作答。',ask:'找不到该证人问题。',option:'请选择有效选项。',missing:'找不到该案。'};
 async function lodge() {
   if(lodging || pending) return;
   $('#form-error').hidden=true;
@@ -661,7 +823,8 @@ async function lodge() {
     else clearStoredPass();
     pending={case_id:result.case_id||case_id,submittedAt};
     try {localStorage.setItem('court-pending-case',JSON.stringify(pending));} catch {}
-    waitingDesk(true);
+    waitingDesk(false);
+    previewRise({id:pending.case_id,mode:'uk',case:charge,seats:Array.from({length:12},(_,seat)=>seat)},'lodged');
     refreshHistory(true);
     schedulePoll();
   } finally {
@@ -688,6 +851,10 @@ async function replay(id,freeze,filed=false,trial,reset=false) {
     Object.assign(stage.state,{whisper:false,strike:0,shake:0,reactionUntil:0,hasSpeech:false});
     transition=null;
     deliberated=false;
+    awaitingAsk=undefined;
+    witnessQuestion=null;
+    answerPending=null;
+    witnessOptions();
   }
   frozen=['opening','rebuttal','jury','verdict'].includes(freeze);
   stage.state.frozen=frozen;
@@ -701,13 +868,24 @@ async function replay(id,freeze,filed=false,trial,reset=false) {
     const targets={opening:'opening',rebuttal:'rebuttal',jury:'juror',verdict:'verdict'};
     document.body.classList.add('frozen');
     const juryFrames=trial.events.flatMap((event,index)=>event.type==='juror'?[index]:[]);
-    const end=freeze==='jury' ? (juryFrames[Math.min(4,Math.floor(juryFrames.length/2))] ?? -1)
+    const firstTally=trial.events.findIndex(event=>event.type==='tally');
+    let end=freeze==='jury' ? (trial.mode==='uk' && firstTally>=0 ? firstTally :
+      (juryFrames[Math.min(4,Math.floor(juryFrames.length/2))] ?? -1))
       : trial.events.map(event=>event.type).lastIndexOf(targets[freeze]);
     if(end<0) {
       showSpeech(()=>t('这场庭审尚未到达所选阶段。','This trial has yet to reach that phase.'));
       return;
     }
-    for(const event of trial.events.slice(0,end+1)) await perform(event);
+    if(freeze==='opening') {
+      const cross=trial.events.findIndex(event=>event.type==='clerk' && event.data.phase==='rebuttal');
+      const witnessEnd=trial.events.findIndex((event,index)=>event.type==='answer' && (cross<0 || index<cross));
+      end=Math.max(end,witnessEnd);
+    }
+    const frames=trial.events.slice(0,end+1);
+    for(let index=nextPlayable(frames);index>=0;index=nextPlayable(frames)) {
+      const [event]=frames.splice(index,1);
+      await perform(event);
+    }
     if(freeze==='verdict') {
       document.body.classList.add('freeze-verdict');
       $('.layout').insertBefore($('#verdict'),$('#transcript'));
@@ -797,6 +975,7 @@ function localize() {
   actor(activeActor[0],stage.state.active,stage.state.ceremony);
   showStamp(stampText);
   $('#speech').textContent=lastSpeech();
+  witnessOptions();
   const opened=[...$('#entries').children].map(node=>node.open);
   $('#entries').replaceChildren();
   transcript.forEach((entry,index)=>{drawEntry(entry);$('#entries').lastElementChild.open=opened[index]||false;});

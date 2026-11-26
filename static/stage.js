@@ -235,7 +235,7 @@ const stage = (() => {
   const bench=tag('',240,95,'stage-tag');
   const defence=tag('',79,165,'stage-tag');
   const crown=tag('',401,165,'stage-tag');
-  const dock=tag('',240,190,'stage-tag');
+  const dock=tag('',240,190,'stage-tag dock-tag');
   const clerk=tag('',240,136,'stage-tag');
   function refreshTags() {
     bench.textContent=t('法官','Judge');

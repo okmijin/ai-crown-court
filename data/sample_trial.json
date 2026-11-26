@@ -59,7 +59,120 @@
             "en": "Serving only brands going overseas could increase gaps between projects."
           }
         }
-      ]
+      ],
+      "lens": {
+        "core_decision": {
+          "zh": "是否应按目前的计划离开 4A 并启动独立工作室？",
+          "en": "Should the director leave the 4A agency and launch the studio as proposed?"
+        },
+        "stated_facts": [
+          {
+            "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+            "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+          }
+        ],
+        "assumptions": [
+          {
+            "zh": "专业定位可能有助于获客。",
+            "en": "A clear specialism may help attract clients."
+          }
+        ],
+        "unknowns": [
+          {
+            "zh": "首个付费项目是否已确认。",
+            "en": "Whether a first paid project is confirmed."
+          },
+          {
+            "zh": "工作室如何覆盖淡季。",
+            "en": "How the studio would cover gaps between projects."
+          }
+        ],
+        "key_disputes": [
+          {
+            "issue": {
+              "zh": "首批客户从哪里来？",
+              "en": "Where will the first clients come from?"
+            },
+            "crown": {
+              "zh": "案情未列出可验证的获客渠道。",
+              "en": "The filing gives no verified sales channel."
+            },
+            "defence": {
+              "zh": "范围明确的小项目可以验证渠道。",
+              "en": "A tightly scoped pilot could test a sales channel."
+            }
+          },
+          {
+            "issue": {
+              "zh": "专业定位能否产生订单？",
+              "en": "Will the specialism generate work?"
+            },
+            "crown": {
+              "zh": "清晰定位并不能证明需求。",
+              "en": "A clear pitch does not establish demand."
+            },
+            "defence": {
+              "zh": "明确定位可以让客户更容易识别适合自己的服务。",
+              "en": "A clear pitch helps clients identify a service that fits."
+            }
+          },
+          {
+            "issue": {
+              "zh": "是否适合直接启动？",
+              "en": "Is a full launch justified now?"
+            },
+            "crown": {
+              "zh": "项目空档可能难以覆盖。",
+              "en": "Gaps between projects could be hard to cover."
+            },
+            "defence": {
+              "zh": "先试做可以减少初期承诺。",
+              "en": "Starting with a pilot limits initial commitments."
+            }
+          }
+        ],
+        "ask": {
+          "id": "first-project",
+          "question": {
+            "zh": "首个付费项目目前处于什么阶段？",
+            "en": "What is the status of the first paid project?"
+          },
+          "options": [
+            {
+              "id": "confirmed",
+              "label": {
+                "zh": "已确认",
+                "en": "Confirmed"
+              }
+            },
+            {
+              "id": "in-talks",
+              "label": {
+                "zh": "在洽谈",
+                "en": "In discussion"
+              }
+            },
+            {
+              "id": "none",
+              "label": {
+                "zh": "暂无",
+                "en": "None yet"
+              }
+            },
+            {
+              "id": "unsure",
+              "label": {
+                "zh": "不确定",
+                "en": "Unsure"
+              }
+            }
+          ],
+          "why_it_matters": {
+            "zh": "首单状态影响直接启动的风险。",
+            "en": "The first project affects the risk of a full launch."
+          }
+        }
+      }
     },
     "defense": {
       "speech": {
@@ -91,8 +204,8 @@
           "number": 3,
           "kind": "inference",
           "text": {
-            "zh": "独立工作室可能先从小项目开始。",
-            "en": "An independent studio could start with small projects."
+            "zh": "只要缩小项目范围，工作室就能拿到首单。",
+            "en": "A tightly scoped pilot is enough for the studio to land its first client."
           }
         }
       ]
@@ -129,6 +242,20 @@
       "issue": {
         "zh": "现有描述是否给出了取得首个项目的路径？",
         "en": "Does the proposal identify a route to the first project?"
+      },
+      "objection": {
+        "by": "prosecution",
+        "target": {
+          "side": "defense",
+          "phase": "opening",
+          "point": 3
+        },
+        "flaw": "unsupported_inference",
+        "claim": {
+          "zh": "辩方开场第 3 点推断缺乏支持：缩小项目范围并不能证明首个客户会签约。",
+          "en": "Unsupported inference in Defence opening point 3: a smaller project scope does not establish that a first client will sign."
+        },
+        "ruling": "sustained"
       }
     },
     "defense": {
@@ -470,7 +597,12 @@
     "finding": "有罪",
     "guilty": 10,
     "acquitted": 2,
-    "abstained": 0
+    "abstained": 0,
+    "focus": [
+      10,
+      0,
+      1
+    ]
   },
   "verdict": {
     "sentence": {
@@ -514,7 +646,12 @@
         "zh": "记录二十家目标品牌对同一报价的回应。",
         "en": "Record responses from twenty prospects to the same offer."
       }
-    ]
+    ],
+    "recommendation": "PILOT",
+    "recommendation_reason": {
+      "zh": "先把洽谈转为一份明确范围的付费试单，再决定是否全面启动。",
+      "en": "Turn one discussion into a paid, tightly scoped pilot before deciding whether to launch fully."
+    }
   },
   "events": [
     {
@@ -523,26 +660,14 @@
       "data": {
         "phase": "opening",
         "text": {
-          "zh": "全体起立 · All rise。英国皇家刑事法院开庭。指控：本案按现有陈述不能成立，不应按所描述的方式推进。",
-          "en": "All rise. The UK Crown Court is in session. Charge: The idea fails as stated and should not go ahead as described."
+          "zh": "全体起立 · All rise。开庭。",
+          "en": "All rise. Court is in session."
         },
         "ceremony": true
       }
     },
     {
       "id": 2,
-      "type": "clerk",
-      "data": {
-        "phase": "opening",
-        "text": {
-          "zh": "请控方（Crown）及辩方（Defence）依次陈词。",
-          "en": "The Crown and the Defence may address the court in turn."
-        },
-        "ceremony": false
-      }
-    },
-    {
-      "id": 3,
       "type": "status",
       "data": {
         "phase": "opening",
@@ -553,10 +678,173 @@
       }
     },
     {
+      "id": 3,
+      "type": "lens",
+      "data": {
+        "core_decision": {
+          "zh": "是否应按目前的计划离开 4A 并启动独立工作室？",
+          "en": "Should the director leave the 4A agency and launch the studio as proposed?"
+        },
+        "stated_facts": [
+          {
+            "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+            "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+          }
+        ],
+        "assumptions": [
+          {
+            "zh": "专业定位可能有助于获客。",
+            "en": "A clear specialism may help attract clients."
+          }
+        ],
+        "unknowns": [
+          {
+            "zh": "首个付费项目是否已确认。",
+            "en": "Whether a first paid project is confirmed."
+          },
+          {
+            "zh": "工作室如何覆盖淡季。",
+            "en": "How the studio would cover gaps between projects."
+          }
+        ],
+        "key_disputes": [
+          {
+            "issue": {
+              "zh": "首批客户从哪里来？",
+              "en": "Where will the first clients come from?"
+            },
+            "crown": {
+              "zh": "案情未列出可验证的获客渠道。",
+              "en": "The filing gives no verified sales channel."
+            },
+            "defence": {
+              "zh": "范围明确的小项目可以验证渠道。",
+              "en": "A tightly scoped pilot could test a sales channel."
+            }
+          },
+          {
+            "issue": {
+              "zh": "专业定位能否产生订单？",
+              "en": "Will the specialism generate work?"
+            },
+            "crown": {
+              "zh": "清晰定位并不能证明需求。",
+              "en": "A clear pitch does not establish demand."
+            },
+            "defence": {
+              "zh": "明确定位可以让客户更容易识别适合自己的服务。",
+              "en": "A clear pitch helps clients identify a service that fits."
+            }
+          },
+          {
+            "issue": {
+              "zh": "是否适合直接启动？",
+              "en": "Is a full launch justified now?"
+            },
+            "crown": {
+              "zh": "项目空档可能难以覆盖。",
+              "en": "Gaps between projects could be hard to cover."
+            },
+            "defence": {
+              "zh": "先试做可以减少初期承诺。",
+              "en": "Starting with a pilot limits initial commitments."
+            }
+          }
+        ],
+        "ask": {
+          "id": "first-project",
+          "question": {
+            "zh": "首个付费项目目前处于什么阶段？",
+            "en": "What is the status of the first paid project?"
+          },
+          "options": [
+            {
+              "id": "confirmed",
+              "label": {
+                "zh": "已确认",
+                "en": "Confirmed"
+              }
+            },
+            {
+              "id": "in-talks",
+              "label": {
+                "zh": "在洽谈",
+                "en": "In discussion"
+              }
+            },
+            {
+              "id": "none",
+              "label": {
+                "zh": "暂无",
+                "en": "None yet"
+              }
+            },
+            {
+              "id": "unsure",
+              "label": {
+                "zh": "不确定",
+                "en": "Unsure"
+              }
+            }
+          ],
+          "why_it_matters": {
+            "zh": "首单状态影响直接启动的风险。",
+            "en": "The first project affects the risk of a full launch."
+          }
+        }
+      }
+    },
+    {
       "id": 4,
+      "type": "ask",
+      "data": {
+        "id": "first-project",
+        "question": {
+          "zh": "首个付费项目目前处于什么阶段？",
+          "en": "What is the status of the first paid project?"
+        },
+        "options": [
+          {
+            "id": "confirmed",
+            "label": {
+              "zh": "已确认",
+              "en": "Confirmed"
+            }
+          },
+          {
+            "id": "in-talks",
+            "label": {
+              "zh": "在洽谈",
+              "en": "In discussion"
+            }
+          },
+          {
+            "id": "none",
+            "label": {
+              "zh": "暂无",
+              "en": "None yet"
+            }
+          },
+          {
+            "id": "unsure",
+            "label": {
+              "zh": "不确定",
+              "en": "Unsure"
+            }
+          }
+        ],
+        "why_it_matters": {
+          "zh": "首单状态影响直接启动的风险。",
+          "en": "The first project affects the risk of a full launch."
+        }
+      }
+    },
+    {
+      "id": 5,
       "type": "opening",
       "data": {
         "side": "prosecution",
+        "await_lens": false,
         "speech": {
           "zh": "法官阁下 · Your Honour，专业方向明确，但独立经营需要自己的客户来源。",
           "en": "Your Honour, the specialism is clear, but an independent studio needs its own route to clients."
@@ -590,25 +878,177 @@
               "en": "Serving only brands going overseas could increase gaps between projects."
             }
           }
-        ]
-      }
-    },
-    {
-      "id": 5,
-      "type": "status",
-      "data": {
-        "phase": "opening",
-        "text": {
-          "zh": "书记员请双方准备…",
-          "en": "The clerk asks the parties to stand by…"
+        ],
+        "lens": {
+          "core_decision": {
+            "zh": "是否应按目前的计划离开 4A 并启动独立工作室？",
+            "en": "Should the director leave the 4A agency and launch the studio as proposed?"
+          },
+          "stated_facts": [
+            {
+              "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+              "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+            }
+          ],
+          "assumptions": [
+            {
+              "zh": "专业定位可能有助于获客。",
+              "en": "A clear specialism may help attract clients."
+            }
+          ],
+          "unknowns": [
+            {
+              "zh": "首个付费项目是否已确认。",
+              "en": "Whether a first paid project is confirmed."
+            },
+            {
+              "zh": "工作室如何覆盖淡季。",
+              "en": "How the studio would cover gaps between projects."
+            }
+          ],
+          "key_disputes": [
+            {
+              "issue": {
+                "zh": "首批客户从哪里来？",
+                "en": "Where will the first clients come from?"
+              },
+              "crown": {
+                "zh": "案情未列出可验证的获客渠道。",
+                "en": "The filing gives no verified sales channel."
+              },
+              "defence": {
+                "zh": "范围明确的小项目可以验证渠道。",
+                "en": "A tightly scoped pilot could test a sales channel."
+              }
+            },
+            {
+              "issue": {
+                "zh": "专业定位能否产生订单？",
+                "en": "Will the specialism generate work?"
+              },
+              "crown": {
+                "zh": "清晰定位并不能证明需求。",
+                "en": "A clear pitch does not establish demand."
+              },
+              "defence": {
+                "zh": "明确定位可以让客户更容易识别适合自己的服务。",
+                "en": "A clear pitch helps clients identify a service that fits."
+              }
+            },
+            {
+              "issue": {
+                "zh": "是否适合直接启动？",
+                "en": "Is a full launch justified now?"
+              },
+              "crown": {
+                "zh": "项目空档可能难以覆盖。",
+                "en": "Gaps between projects could be hard to cover."
+              },
+              "defence": {
+                "zh": "先试做可以减少初期承诺。",
+                "en": "Starting with a pilot limits initial commitments."
+              }
+            }
+          ],
+          "ask": {
+            "id": "first-project",
+            "question": {
+              "zh": "首个付费项目目前处于什么阶段？",
+              "en": "What is the status of the first paid project?"
+            },
+            "options": [
+              {
+                "id": "confirmed",
+                "label": {
+                  "zh": "已确认",
+                  "en": "Confirmed"
+                }
+              },
+              {
+                "id": "in-talks",
+                "label": {
+                  "zh": "在洽谈",
+                  "en": "In discussion"
+                }
+              },
+              {
+                "id": "none",
+                "label": {
+                  "zh": "暂无",
+                  "en": "None yet"
+                }
+              },
+              {
+                "id": "unsure",
+                "label": {
+                  "zh": "不确定",
+                  "en": "Unsure"
+                }
+              }
+            ],
+            "why_it_matters": {
+              "zh": "首单状态影响直接启动的风险。",
+              "en": "The first project affects the risk of a full launch."
+            }
+          }
         }
       }
     },
     {
       "id": 6,
+      "type": "answer",
+      "data": {
+        "ask": {
+          "id": "first-project",
+          "question": {
+            "zh": "首个付费项目目前处于什么阶段？",
+            "en": "What is the status of the first paid project?"
+          },
+          "options": [
+            {
+              "id": "confirmed",
+              "label": {
+                "zh": "已确认",
+                "en": "Confirmed"
+              }
+            },
+            {
+              "id": "in-talks",
+              "label": {
+                "zh": "在洽谈",
+                "en": "In discussion"
+              }
+            },
+            {
+              "id": "none",
+              "label": {
+                "zh": "暂无",
+                "en": "None yet"
+              }
+            },
+            {
+              "id": "unsure",
+              "label": {
+                "zh": "不确定",
+                "en": "Unsure"
+              }
+            }
+          ],
+          "why_it_matters": {
+            "zh": "首单状态影响直接启动的风险。",
+            "en": "The first project affects the risk of a full launch."
+          }
+        },
+        "option": "in-talks",
+        "source": "user"
+      }
+    },
+    {
+      "id": 7,
       "type": "opening",
       "data": {
         "side": "defense",
+        "await_lens": false,
         "speech": {
           "zh": "法官阁下 · Your Honour，小工作室可以先用范围有限的项目验证需求。",
           "en": "Your Honour, a small studio can test demand with a tightly scoped project."
@@ -638,15 +1078,15 @@
             "number": 3,
             "kind": "inference",
             "text": {
-              "zh": "独立工作室可能先从小项目开始。",
-              "en": "An independent studio could start with small projects."
+              "zh": "只要缩小项目范围，工作室就能拿到首单。",
+              "en": "A tightly scoped pilot is enough for the studio to land its first client."
             }
           }
         ]
       }
     },
     {
-      "id": 7,
+      "id": 8,
       "type": "clerk",
       "data": {
         "phase": "rebuttal",
@@ -658,7 +1098,7 @@
       }
     },
     {
-      "id": 8,
+      "id": 9,
       "type": "status",
       "data": {
         "phase": "rebuttal",
@@ -669,7 +1109,7 @@
       }
     },
     {
-      "id": 9,
+      "id": 10,
       "type": "rebuttal",
       "data": {
         "side": "prosecution",
@@ -702,17 +1142,20 @@
         "issue": {
           "zh": "现有描述是否给出了取得首个项目的路径？",
           "en": "Does the proposal identify a route to the first project?"
-        }
-      }
-    },
-    {
-      "id": 10,
-      "type": "status",
-      "data": {
-        "phase": "rebuttal",
-        "text": {
-          "zh": "书记员请双方准备…",
-          "en": "The clerk asks the parties to stand by…"
+        },
+        "objection": {
+          "by": "prosecution",
+          "target": {
+            "side": "defense",
+            "phase": "opening",
+            "point": 3
+          },
+          "flaw": "unsupported_inference",
+          "claim": {
+            "zh": "辩方开场第 3 点推断缺乏支持：缩小项目范围并不能证明首个客户会签约。",
+            "en": "Unsupported inference in Defence opening point 3: a smaller project scope does not establish that a first client will sign."
+          },
+          "ruling": "sustained"
         }
       }
     },
@@ -1164,7 +1607,12 @@
         "finding": "有罪",
         "guilty": 10,
         "acquitted": 2,
-        "abstained": 0
+        "abstained": 0,
+        "focus": [
+          10,
+          0,
+          1
+        ]
       }
     },
     {
@@ -1235,7 +1683,12 @@
             "zh": "记录二十家目标品牌对同一报价的回应。",
             "en": "Record responses from twenty prospects to the same offer."
           }
-        ]
+        ],
+        "recommendation": "PILOT",
+        "recommendation_reason": {
+          "zh": "先把洽谈转为一份明确范围的付费试单，再决定是否全面启动。",
+          "en": "Turn one discussion into a paid, tightly scoped pilot before deciding whether to launch fully."
+        }
       }
     },
     {
@@ -1245,6 +1698,167 @@
     }
   ],
   "calls": [],
+  "lang": "zh",
+  "answers": [
+    {
+      "ask": {
+        "id": "first-project",
+        "question": {
+          "zh": "首个付费项目目前处于什么阶段？",
+          "en": "What is the status of the first paid project?"
+        },
+        "options": [
+          {
+            "id": "confirmed",
+            "label": {
+              "zh": "已确认",
+              "en": "Confirmed"
+            }
+          },
+          {
+            "id": "in-talks",
+            "label": {
+              "zh": "在洽谈",
+              "en": "In discussion"
+            }
+          },
+          {
+            "id": "none",
+            "label": {
+              "zh": "暂无",
+              "en": "None yet"
+            }
+          },
+          {
+            "id": "unsure",
+            "label": {
+              "zh": "不确定",
+              "en": "Unsure"
+            }
+          }
+        ],
+        "why_it_matters": {
+          "zh": "首单状态影响直接启动的风险。",
+          "en": "The first project affects the risk of a full launch."
+        }
+      },
+      "option": "in-talks",
+      "source": "user"
+    }
+  ],
+  "lens": {
+    "core_decision": {
+      "zh": "是否应按目前的计划离开 4A 并启动独立工作室？",
+      "en": "Should the director leave the 4A agency and launch the studio as proposed?"
+    },
+    "stated_facts": [
+      {
+        "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+        "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+      }
+    ],
+    "assumptions": [
+      {
+        "zh": "专业定位可能有助于获客。",
+        "en": "A clear specialism may help attract clients."
+      }
+    ],
+    "unknowns": [
+      {
+        "zh": "首个付费项目是否已确认。",
+        "en": "Whether a first paid project is confirmed."
+      },
+      {
+        "zh": "工作室如何覆盖淡季。",
+        "en": "How the studio would cover gaps between projects."
+      }
+    ],
+    "key_disputes": [
+      {
+        "issue": {
+          "zh": "首批客户从哪里来？",
+          "en": "Where will the first clients come from?"
+        },
+        "crown": {
+          "zh": "案情未列出可验证的获客渠道。",
+          "en": "The filing gives no verified sales channel."
+        },
+        "defence": {
+          "zh": "范围明确的小项目可以验证渠道。",
+          "en": "A tightly scoped pilot could test a sales channel."
+        }
+      },
+      {
+        "issue": {
+          "zh": "专业定位能否产生订单？",
+          "en": "Will the specialism generate work?"
+        },
+        "crown": {
+          "zh": "清晰定位并不能证明需求。",
+          "en": "A clear pitch does not establish demand."
+        },
+        "defence": {
+          "zh": "明确定位可以让客户更容易识别适合自己的服务。",
+          "en": "A clear pitch helps clients identify a service that fits."
+        }
+      },
+      {
+        "issue": {
+          "zh": "是否适合直接启动？",
+          "en": "Is a full launch justified now?"
+        },
+        "crown": {
+          "zh": "项目空档可能难以覆盖。",
+          "en": "Gaps between projects could be hard to cover."
+        },
+        "defence": {
+          "zh": "先试做可以减少初期承诺。",
+          "en": "Starting with a pilot limits initial commitments."
+        }
+      }
+    ],
+    "ask": {
+      "id": "first-project",
+      "question": {
+        "zh": "首个付费项目目前处于什么阶段？",
+        "en": "What is the status of the first paid project?"
+      },
+      "options": [
+        {
+          "id": "confirmed",
+          "label": {
+            "zh": "已确认",
+            "en": "Confirmed"
+          }
+        },
+        {
+          "id": "in-talks",
+          "label": {
+            "zh": "在洽谈",
+            "en": "In discussion"
+          }
+        },
+        {
+          "id": "none",
+          "label": {
+            "zh": "暂无",
+            "en": "None yet"
+          }
+        },
+        {
+          "id": "unsure",
+          "label": {
+            "zh": "不确定",
+            "en": "Unsure"
+          }
+        }
+      ],
+      "why_it_matters": {
+        "zh": "首单状态影响直接启动的风险。",
+        "en": "The first project affects the risk of a full launch."
+      }
+    }
+  },
   "summing": {
     "speech": {
       "zh": "陪审团各位成员 · Members of the jury，控方指出获客路径未交代，辩方提出可小规模试点。举证责任在控方。请区分原文事实与推断，只根据庭审记录裁决。",

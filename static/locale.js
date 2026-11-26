@@ -9,12 +9,19 @@ try {
   }
 } catch {}
 const t = (zh,en) => lang === 'zh' ? zh : en;
-const local = value => typeof value === 'object' && value !== null ? value[lang] : value;
+const local = value => typeof value === 'object' && value !== null ? (value[lang] || value[t('en','zh')]) : value;
 const modes = {uk:['英国皇家刑事法院','UK Crown Court'],full:['全审','Full trial'],quick:['快审','Quick trial']};
 const phases = {lodged:['候审中','Awaiting Trial'],opening:['开场陈词','Openings'],rebuttal:['交叉质询','Cross-examination'],
   summing:['总结 · Summing-up','Summing-up'],jury:['陪审团','Jury'],judge:['法官宣判','Verdict']};
 const roles = {prosecution:['控方 · Crown','Crown'],defense:['辩方 · Defence','Defence'],
-  clerk:['书记员 · Clerk','Clerk'],judge:['法官 · Judge','Judge']};
+  dock:['证人席','Witness stand'],clerk:['书记员 · Clerk','Clerk'],judge:['法官 · Judge','Judge']};
+const beats = {
+  lens:['案情分析','Case Lens'], stated_facts:['已陈述事实','Stated facts'],
+  assumptions:['假设','Assumptions'], unknowns:['未知事项','Unknowns'],
+  witness:['证人席','Witness stand'], answer:['记录答复','Recorded answer'],
+  unknown:['未提供 · UNKNOWN','Unknown'], revote:['陪审团复核表决','Jury re-evaluation'],
+  changed:['改票','Changed vote'], recommendation:['法官行动建议','Judge’s action recommendation'],
+};
 const findings = {'有罪':['有罪 · Guilty','Guilty'],'无罪':['无罪 · Not guilty','Not guilty'],
   '陪审团未能达成多数':['陪审团未能达成多数 · Hung jury','Hung jury'],
   '陪审团僵持':['陪审团僵持 · Hung jury','Hung jury'],'未表决':['未表决','Abstained']};
@@ -52,6 +59,11 @@ const errors = {
   '书记官尚未就位，请稍后再试。':'The clerk is not at the desk yet. Try again later.',
   '书记官无法联系法庭，请稍后再试。':'The clerk could not reach the court. Try again later.',
   '今日立案已满，请明日再来。':'Today\u2019s filings are full. Come back tomorrow.',
+  '提交过于频繁，请稍后再试。':'Too many answers submitted. Try again shortly.',
+  '这个问题已经作答。':'This question has already been answered.',
+  '找不到该证人问题。':'That witness question was not found.',
+  '请选择有效选项。':'Choose a valid option.',
+
   '书记官未能立案，请重试。':'The clerk could not lodge the case. Please try again.',
   '法庭暂时无法响应。':'The court is temporarily unavailable.',
   '案由触发隐私门禁。请删除敏感信息后再开庭。':'The privacy gate blocked this case. Remove sensitive information before submitting.',
