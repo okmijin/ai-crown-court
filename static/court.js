@@ -18,14 +18,81 @@ let pollingId, historyRequest = 0, rejectedPollPass, retryPollAt = 0;
 const isPrivateId = id => /^[0-9a-f]{32}$/.test(id);
 const passPrompt = "请出示法庭通行令以查阅私人案卷。";
 let soundOn = false, soundWanted = false, archive, transition, deliberated = false;
-const SOUND_V='20261127e';
+const SOUND_V='20261127f';
 const soundLevel={type:.14,answer:.16,ask:.18,placard:.18,ruling:.18,gavel:.28,objection:.3,gavel3:.34,gasp:.22,uproar:.24,bed:.85,open:.95,close:.95,pass:.32,fail:.32,hung:.28};
 const soundFile={gavel:'static/gavel.wav',type:'static/type.wav',objection:'static/objection.wav',gavel3:'static/gavel3.mp3',bed:'static/court-bed.mp3',gasp:'static/gasp.mp3',uproar:'static/uproar.mp3',pass:'static/verdict-pass.mp3',fail:'static/verdict-fail.mp3',hung:'static/verdict-hung.mp3',ask:'static/ask-pop.mp3',placard:'static/placard.mp3',ruling:'static/ruling.mp3',answer:'static/answer.mp3',open:'static/court-open.mp3',close:'static/court-close.mp3'};
 const sounds={};
 let soundCtx, duckTimer, lastPlacard=0, bedWanted=false, fastForward=false, closePlayed=false, bedTimer=0;
 
 const buffers={};
+/* court-sound-v5 */
 let bedSource, bedGain, decoding;
+const BED_DUCK_RATIO=0.35, OPEN_BED_CROSSFADE_MS=1800;
+let masterGain, courtAnalyser, ctxHooked=false;
+function hookCtx() {
+  if (!soundCtx || ctxHooked) return;
+  ctxHooked=true;
+  soundCtx.addEventListener('statechange',()=>{
+    if (soundCtx.state==='running' && soundOn && bedWanted && !frozen) startBed();
+  });
+}
+function ensureMaster() {
+  if (!soundCtx) return;
+  hookCtx();
+  if (masterGain) return;
+  masterGain=soundCtx.createGain();
+  masterGain.gain.value=1;
+  masterGain.connect(soundCtx.destination);
+  courtAnalyser=soundCtx.createAnalyser();
+  courtAnalyser.fftSize=2048;
+  courtAnalyser.smoothingTimeConstant=0;
+  masterGain.connect(courtAnalyser);
+}
+function outputNode() {
+  ensureMaster();
+  return masterGain||soundCtx.destination;
+}
+function bedDuckLevel() {return soundLevel.bed*BED_DUCK_RATIO;}
+function ensureAudioRunning() {
+  if (!soundCtx) return Promise.resolve();
+  if (soundCtx.state==='running') return Promise.resolve();
+  return soundCtx.resume().catch(()=>{});
+}
+function onForeground() {
+  if (typeof document!=='undefined' && document.hidden) return;
+  const go=()=>{if (soundOn && bedWanted && !frozen) startBed();};
+  if (!soundCtx) {go();return;}
+  ensureAudioRunning().then(go);
+}
+function courtMeterTick() {
+  if (!courtAnalyser || !window.__courtLevelLog) return;
+  const n=courtAnalyser.fftSize, data=new Float32Array(n);
+  courtAnalyser.getFloatTimeDomainData(data);
+  let sum=0, peak=0;
+  for (let i=0;i<n;i++) {const v=data[i], a=Math.abs(v); sum+=v*v; if(a>peak) peak=a;}
+  const rms=Math.sqrt(sum/n);
+  window.__courtLevelLog.push({
+    t:Math.round(performance.now()),
+    rms, peak,
+    db:20*Math.log10(rms+1e-12),
+    ctx:soundCtx&&soundCtx.state,
+    bedGain:bedGain?bedGain.gain.value:null,
+    open:openPlaying(),
+    bedWanted, closePlayed
+  });
+}
+window.__courtStartMeter=function(){
+  window.__courtLevelLog=[];
+  if (window.__courtMeterId) clearInterval(window.__courtMeterId);
+  window.__courtMeterId=setInterval(courtMeterTick,100);
+};
+window.__courtStopMeter=function(){
+  clearInterval(window.__courtMeterId);
+  window.__courtMeterId=0;
+  return window.__courtLevelLog||[];
+};
+window.__courtOnForeground=onForeground;
+
 function loadSound(name) {
   if (sounds[name]) return sounds[name];
   const node=new Audio(soundFile[name]+'?v='+SOUND_V);
@@ -99,16 +166,27 @@ function startBed() {
   bedWanted=true;
   if (!soundOn || frozen) return;
   if (openPlaying()) {
+    // Keep hall air under the opening so the Court! / All rise! pauses are not silence,
+    // then crossfade up to full bed in the last 1.8 s of the sting.
+    startBedNow(.04, bedDuckLevel());
     clearTimeout(bedTimer);
-    bedTimer=setTimeout(()=>{if(bedWanted) startBed();},Math.max(50,openUntil-performance.now()+30));
+    const remain=openUntil-performance.now();
+    const wait=Math.max(0, remain-OPEN_BED_CROSSFADE_MS);
+    bedTimer=setTimeout(()=>{if(bedWanted) startBedNow(.008);},wait);
     return;
   }
+  startBedNow();
+}
+function startBedNow(fadeStep, target) {
+  if (!bedWanted || !soundOn || frozen) return;
+  ensureMaster();
+  const level=(target==null?soundLevel.bed:target);
   if (webAudioReady('bed')) {
     if (sounds.bed && !sounds.bed.paused) {try{sounds.bed.pause();}catch{}}
     if (!bedSource) {
       bedGain=soundCtx.createGain();
       bedGain.gain.value=0;
-      bedGain.connect(soundCtx.destination);
+      bedGain.connect(outputNode());
       bedSource=soundCtx.createBufferSource();
       bedSource.buffer=buffers.bed;
       bedSource.loop=true;
@@ -117,14 +195,14 @@ function startBed() {
       bedSource.connect(bedGain);
       bedSource.start();
     }
-    fadeBed(soundLevel.bed,.015);
+    fadeBed(level, fadeStep||.015);
     return;
   }
   const bed=loadSound('bed');
   if (bed.paused) {bed.volume=0;bed.play().catch(()=>{});}
-  fadeBed(soundLevel.bed,.015);
+  fadeBed(level, fadeStep||.015);
   // Retry Web Audio once the buffer arrives so the loop uses the seamless buffer, not the MP3 element.
-  if (decoding) decoding.then(()=>{if(bedWanted&&soundOn&&!frozen&&!bedSource) startBed();});
+  if (decoding) decoding.then(()=>{if(bedWanted&&soundOn&&!frozen&&!bedSource) startBedNow(fadeStep, target);});
 }
 function stopBed() {
   bedWanted=false;
@@ -140,6 +218,7 @@ function stopBed() {
 }
 function duckBed() {
   if (!bedWanted || !soundOn) return;
+  const ducked=bedDuckLevel();
   if (bedGain && soundCtx) {
     const now=soundCtx.currentTime, cur=bedGain.gain.value;
     if (bedGain.gain.cancelAndHoldAtTime) bedGain.gain.cancelAndHoldAtTime(now);
@@ -147,16 +226,16 @@ function duckBed() {
       bedGain.gain.cancelScheduledValues(now);
       bedGain.gain.setValueAtTime(cur,now);
     }
-    bedGain.gain.linearRampToValueAtTime(.02,now+.05);
+    bedGain.gain.linearRampToValueAtTime(ducked,now+.05);
   } else {
     const bed=sounds.bed;
     if (!bed || bed.paused) return;
-    bed.volume=Math.min(bed.volume,.02);
+    bed.volume=Math.max(ducked, Math.min(bed.volume, ducked));
+    bed.volume=ducked;
   }
   clearTimeout(duckTimer);
   duckTimer=setTimeout(()=>{if(bedWanted&&soundOn&&!frozen) fadeBed(soundLevel.bed,.015);},500);
 }
-
 const sessions = {preview:['法庭预览','Court preview'],live:['实时庭审','Live trial'],fixture:['示范庭审','Demo trial'],
   lodged:['候审中','Awaiting Trial'],filed:['开庭','Court in Session'],replay:['案卷重播','Case replay'],freeze:['庭审定格','Freeze frame']};
 const motions = {running:['庭审进行中','Trial in progress'],done:['庭审结束','Trial complete'],
@@ -203,14 +282,13 @@ function tone(name, force) {
   // The opening cue owns the room: nothing else may cut across it.
   if (!force && openPlaying()) return;
   if (name==='bed' || name==='murmur') {startBed();return;}
-  if (name==='open') stopBed();
-  else if (name!=='close') duckBed();
+  if (name!=='open' && name!=='close') duckBed();
   window.__courtTones=(window.__courtTones||0)+1;
   if (webAudioReady(name)) {
     try {
       const gain=soundCtx.createGain();
       gain.gain.value=soundLevel[name]??.24;
-      gain.connect(soundCtx.destination);
+      gain.connect(outputNode());
       const source=soundCtx.createBufferSource();
       source.buffer=buffers[name];
       source.connect(gain);
@@ -299,6 +377,7 @@ function unlockSound() {
     try {
       soundCtx=soundCtx||makeSoundCtx();
       if (soundCtx.state!=='running') soundCtx.resume().catch(()=>{});
+      ensureMaster();
       const buf=soundCtx.createBuffer(1,1,22050);
       const src=soundCtx.createBufferSource();
       src.buffer=buf;
@@ -1375,12 +1454,9 @@ $('#sound').addEventListener('click',event=>{
   event.preventDefault();
   setSound(!soundOn);
 });
-document.addEventListener('visibilitychange',()=>{
-  if (document.hidden) {
-    if (bedSource) {try{bedSource.stop();}catch{} bedSource=bedGain=null;}
-    if (sounds.bed && !sounds.bed.paused) sounds.bed.pause();
-  } else if (soundOn && bedWanted && !frozen) startBed();
-});
+document.addEventListener('visibilitychange', onForeground);
+window.addEventListener('pageshow', onForeground);
+
 function paintSkip() {
   const button=$('#skip');
   if(button) button.hidden=!playing || frozen;
