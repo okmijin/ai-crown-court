@@ -789,7 +789,7 @@ const clerkErrors={pass:'法庭通行令不正确。',locked:'通行令错误次
 async function lodge() {
   if(lodging || pending) return;
   $('#form-error').hidden=true;
-  const rawCharge=$('#charge').value, rawBackground=$('#background').value, pass=$('#court-pass').value;
+  const rawCharge=$('#charge').value, rawBackground=$('#background').value, pass=$('#court-pass').value.trim().toLowerCase();
   const charge=rawCharge.trim(), background=rawBackground.trim();
   if(!charge || [...rawCharge].length>200) return showError('请输入 1 至 200 字案由。');
   if([...rawBackground].length>4000) return showError('案情陈述最多 4000 字。');
