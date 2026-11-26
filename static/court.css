@@ -161,3 +161,7 @@ body[data-replay=true] #case-form{margin:0}
 .witness-options button{min-height:44px;background:#111827}
 .witness-options button:focus-visible{outline:2px solid var(--gold)}
 .witness-active .dock-tag{background:#49351e;color:#fff0c4;outline:1px solid var(--gold)}
+#lodge-case{justify-content:center;text-align:center}
+#skip:not([hidden]){border:1px solid var(--gold);padding:6px 12px;font-size:13px;font-weight:700;background:#111827}
+#sound-hint{position:fixed;z-index:9;top:72px;right:12px;margin:0;padding:8px 12px;background:#111827;color:var(--gold);border:1px solid var(--gold);font-size:13px;max-width:calc(100% - 24px)}
+#sound-hint[hidden]{display:none}

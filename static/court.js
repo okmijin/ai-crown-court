@@ -21,8 +21,10 @@ const SOUND_V='20261126z';
 const soundLevel={type:.14,answer:.16,ask:.18,placard:.18,ruling:.18,gavel:.28,objection:.3,gavel3:.34,gasp:.22,uproar:.24,murmur:.07,pass:.32,fail:.32,hung:.28};
 const soundFile={gavel:'static/gavel.wav',type:'static/type.wav',objection:'static/objection.wav',gavel3:'static/gavel3.mp3',murmur:'static/murmur.mp3',gasp:'static/gasp.mp3',uproar:'static/uproar.mp3',pass:'static/verdict-pass.mp3',fail:'static/verdict-fail.mp3',hung:'static/verdict-hung.mp3',ask:'static/ask-pop.mp3',placard:'static/placard.mp3',ruling:'static/ruling.mp3',answer:'static/answer.mp3'};
 const sounds={};
-let soundCtx, duckTimer, lastPlacard=0, bedWanted=false;
+let soundCtx, duckTimer, lastPlacard=0, bedWanted=false, fastForward=false;
 
+const buffers={};
+let bedSource, bedGain, decoding;
 function loadSound(name) {
   if (sounds[name]) return sounds[name];
   const node=new Audio(soundFile[name]+'?v='+SOUND_V);
@@ -35,7 +37,30 @@ function loadSound(name) {
 function loadAllSounds() {
   Object.keys(soundFile).forEach(loadSound);
 }
+function decodeAll() {
+  if (decoding || !soundCtx) return decoding;
+  decoding=Promise.all(Object.entries(soundFile).map(([name,file])=>
+    fetch(file+'?v='+SOUND_V).then(r=>r.arrayBuffer())
+      .then(data=>new Promise((ok,no)=>soundCtx.decodeAudioData(data,ok,no)))
+      .then(buffer=>{buffers[name]=buffer;}).catch(()=>{})));
+  return decoding;
+}
+function webAudioReady(name) {
+  return soundCtx && soundCtx.state==='running' && buffers[name];
+}
 function fadeBed(target, step=.03) {
+  if (bedGain && soundCtx) {
+    const now=soundCtx.currentTime, span=Math.max(.05,Math.abs(bedGain.gain.value-target)/step/60);
+    bedGain.gain.cancelScheduledValues(now);
+    bedGain.gain.setValueAtTime(bedGain.gain.value,now);
+    bedGain.gain.linearRampToValueAtTime(Math.max(0,target),now+span);
+    if (target<=0) {
+      const source=bedSource;
+      bedSource=bedGain=null;
+      setTimeout(()=>{try{source?.stop();}catch{}},span*1000+60);
+    }
+    return;
+  }
   const bed=sounds.murmur;
   if (!bed) return;
   const tick=()=>{
@@ -54,20 +79,47 @@ function fadeBed(target, step=.03) {
 }
 function startBed() {
   bedWanted=true;
-  if (!soundOn || frozen || stage.reduced.matches) return;
+  if (!soundOn || frozen) return;
+  if (webAudioReady('murmur')) {
+    if (sounds.murmur && !sounds.murmur.paused) {try{sounds.murmur.pause();}catch{}}
+    if (!bedSource) {
+      bedGain=soundCtx.createGain();
+      bedGain.gain.value=0;
+      bedGain.connect(soundCtx.destination);
+      bedSource=soundCtx.createBufferSource();
+      bedSource.buffer=buffers.murmur;
+      bedSource.loop=true;
+      bedSource.connect(bedGain);
+      bedSource.start();
+    }
+    fadeBed(soundLevel.murmur,.015);
+    return;
+  }
   const bed=loadSound('murmur');
   if (bed.paused) {bed.volume=0;bed.play().catch(()=>{});}
   fadeBed(soundLevel.murmur,.015);
 }
 function stopBed() {
   bedWanted=false;
-  if (!sounds.murmur) return;
-  fadeBed(0,.025);
+  if (bedSource) fadeBed(0,.025);
+  const bed=sounds.murmur;
+  if (bed && !bed.paused) {
+    const saved=bedGain;
+    bedGain=null;
+    fadeBed(0,.025);
+    bedGain=saved;
+  }
 }
 function duckBed() {
-  const bed=sounds.murmur;
-  if (!bed || bed.paused || !bedWanted || !soundOn) return;
-  bed.volume=Math.min(bed.volume,.02);
+  if (!bedWanted || !soundOn) return;
+  if (bedGain && soundCtx) {
+    bedGain.gain.cancelScheduledValues(soundCtx.currentTime);
+    bedGain.gain.setValueAtTime(Math.min(bedGain.gain.value,.02),soundCtx.currentTime);
+  } else {
+    const bed=sounds.murmur;
+    if (!bed || bed.paused) return;
+    bed.volume=Math.min(bed.volume,.02);
+  }
   clearTimeout(duckTimer);
   duckTimer=setTimeout(()=>{if(bedWanted&&soundOn&&!frozen) fadeBed(soundLevel.murmur,.015);},500);
 }
@@ -106,14 +158,27 @@ async function api(url,options) {
   return response.json();
 }
 function tone(name) {
-  if (!soundOn || frozen) return;
+  if (!soundOn || frozen || fastForward) return;
   if (name==='murmur') {startBed();return;}
-  const src=loadSound(name);
   duckBed();
+  window.__courtTones=(window.__courtTones||0)+1;
+  if (webAudioReady(name)) {
+    try {
+      const gain=soundCtx.createGain();
+      gain.gain.value=soundLevel[name]??.24;
+      gain.connect(soundCtx.destination);
+      const source=soundCtx.createBufferSource();
+      source.buffer=buffers[name];
+      source.connect(gain);
+      source.start();
+      return;
+    } catch {}
+  }
+  const src=loadSound(name);
   try {
     const node=src.cloneNode();
     node.volume=soundLevel[name]??.24;
-    node.play().catch(()=>{});
+    node.play().catch(()=>{src.currentTime=0;src.play().catch(()=>{});});
   } catch {
     src.currentTime=0;
     src.play().catch(()=>{});
@@ -129,6 +194,19 @@ function verdictCue() {
   const key=voteKey(current?.tally?.finding);
   return key==='无罪'?'pass':key==='有罪'?'fail':'hung';
 }
+let hintTimer;
+function soundHint(show) {
+  let hint=$('#sound-hint');
+  if (!hint) {
+    hint=element('p',undefined,document.body);
+    hint.id='sound-hint';
+    hint.setAttribute('role','status');
+  }
+  hint.textContent=t('若无声，请关闭手机侧边静音键','No sound? Turn off the phone’s silent switch');
+  hint.hidden=!show;
+  clearTimeout(hintTimer);
+  if (show) hintTimer=setTimeout(()=>{hint.hidden=true;},6000);
+}
 function paintSound() {
   const button=$('#sound');
   if (!button) return;
@@ -141,12 +219,14 @@ function readSoundPref() {
 function writeSoundPref(on) {
   try {localStorage.setItem('court-sound',on?'on':'off');} catch {}
 }
-async function unlockSound() {
+function unlockSound() {
+  // Runs synchronously inside the tap so iOS Safari keeps the user gesture.
+  try {if (navigator.audioSession) navigator.audioSession.type='playback';} catch {}
   const Ctx=window.AudioContext||window.webkitAudioContext;
   if (Ctx) {
-    soundCtx=soundCtx||new Ctx();
-    if (soundCtx.state==='suspended') await soundCtx.resume().catch(()=>{});
     try {
+      soundCtx=soundCtx||new Ctx();
+      if (soundCtx.state!=='running') soundCtx.resume().catch(()=>{});
       const buf=soundCtx.createBuffer(1,1,22050);
       const src=soundCtx.createBufferSource();
       src.buffer=buf;
@@ -155,33 +235,32 @@ async function unlockSound() {
     } catch {}
   }
   loadAllSounds();
-  await Promise.all(Object.entries(sounds).map(([name,node])=>{
-    node.muted=true;
-    node.volume=0;
-    return node.play().then(()=>{
-      node.pause();
-      node.currentTime=0;
-      node.muted=false;
-      node.volume=soundLevel[name]??.24;
-    }).catch(()=>{
-      node.muted=false;
-      node.volume=soundLevel[name]??.24;
-    });
-  }));
+  for (const [name,node] of Object.entries(sounds)) {
+    if (name==='murmur' && bedWanted) continue;
+    try {
+      node.muted=true;
+      const played=node.play();
+      const reset=()=>{node.pause();node.currentTime=0;node.muted=false;node.volume=soundLevel[name]??.24;};
+      if (played?.then) played.then(reset,()=>{node.muted=false;}); else reset();
+    } catch {node.muted=false;}
+  }
+  decodeAll();
 }
-async function setSound(on) {
+function setSound(on) {
   if (on) {
-    await unlockSound();
+    unlockSound();
     soundOn=true;
     soundWanted=true;
     writeSoundPref(true);
     paintSound();
+    soundHint(true);
     if (bedWanted) startBed();
     return true;
   }
   soundOn=false;
   soundWanted=false;
   writeSoundPref(false);
+  soundHint(false);
   stopBed();
   Object.values(sounds).forEach(node=>{try{node.pause();node.currentTime=0;}catch{}});
   paintSound();
@@ -244,7 +323,7 @@ async function deliberate() {
   if (deliberated) return;
   deliberated=true;
   stage.state.whisper=!frozen ? !stage.reduced.matches : query.get('freeze')==='jury';
-  if (stage.state.whisper && !frozen && !stage.reduced.matches) startBed();
+  if (!frozen && !fastForward) startBed();
   actor('clerk',null);
   showSpeech(()=>t('陪审团正在评议…','The jury is deliberating…'));
   if (!frozen) {
@@ -316,7 +395,7 @@ function type(getText, max=9400, {emotion, reactionText, cues=[]}={}) {
   const started=performance.now();
   stage.state.speechStart=started;
   stage.state.hasSpeech=true;
-  const still=frozen || switching || stage.reduced.matches || liveQuestionQueued();
+  const still=frozen || switching || fastForward || stage.reduced.matches || liveQuestionQueued();
   const initialCue=still ? cues.at(-1) : cues[0];
   react(initialCue?.text ?? reactionText ?? getText(),initialCue?.emotion ?? emotion);
   const speech=$('#speech'), button=$('#skip');
@@ -328,7 +407,6 @@ function type(getText, max=9400, {emotion, reactionText, cues=[]}={}) {
   }
   const chars=[...text];
   const duration=Math.min(max,Math.max(380,chars.length*19));
-  button.hidden=false;
   stage.state.typing=true;
   return new Promise(resolve=>{
     let frame,lastLength=-1,lastSound=0,cueIndex=0;
@@ -337,7 +415,6 @@ function type(getText, max=9400, {emotion, reactionText, cues=[]}={}) {
       stage.state.typing=false;
       speech.textContent=lastSpeech();
       speech.scrollTop=0;
-      button.hidden=true;
       finishFrame=null;
       resolve();
     };
@@ -371,19 +448,21 @@ function showStamp(key) {
   if(key) $('#objection').textContent=t(...stamps[key]);
 }
 function objection(key,show) {
-  if(!show||frozen||stage.reduced.matches) return Promise.resolve();
+  if(!show||frozen||fastForward) return Promise.resolve();
+  if(stage.reduced.matches) {
+    if(key==='objection') {tone('objection');setTimeout(()=>tone('gasp'),110);} else tone('ruling');
+    return Promise.resolve();
+  }
   showStamp(key);
   if(key==='objection') {stage.state.shake=performance.now()+265;tone('objection');setTimeout(()=>tone('gasp'),110);}
   else tone('ruling');
   return hold(460).then(()=>showStamp(null));
 }
 function hold(duration) {
-  if(switching || liveQuestionQueued()) return Promise.resolve();
-  $('#skip').hidden=false;
+  if(switching || fastForward || liveQuestionQueued()) return Promise.resolve();
   return new Promise(resolve=>{
     const finish=()=>{
       clearTimeout(timer);
-      $('#skip').hidden=true;
       finishFrame=null;
       resolve();
     };
@@ -695,6 +774,7 @@ async function enqueue(event) {
   if((event.type==='opening' && ritualTyping) || (event.type==='ask' && liveQuestions())) finishFrame?.();
   if(playing) return;
   playing=true;
+  paintSkip();
   for(let index=nextPlayable(queue);index>=0;index=nextPlayable(queue)) {
     const [next]=queue.splice(index,1);
     if(next.type==='error') queue.length=0;
@@ -707,6 +787,11 @@ async function enqueue(event) {
     }
   }
   playing=false;
+  paintSkip();
+  if(fastForward && current?.verdict) {
+    fastForward=false;
+    if(!frozen) {renderVerdict(current.verdict);$('#verdict').scrollIntoView({block:'start'});}
+  }
   playbackDone?.();
   playbackDone=null;
 }
@@ -742,6 +827,11 @@ function saveSession(session) {
     else localStorage.removeItem('court-session');
     clearStoredPass();
   } catch {}
+}
+function paintPassField() {
+  const field=$('#court-pass');
+  if(!field) return;
+  field.placeholder=courtSession()?t('已在此设备记住，无需再输入','Remembered on this device'):'';
 }
 function clearSession() {
   legacyPass='';
@@ -935,7 +1025,8 @@ async function lodge() {
   if(privateCase.test(charge) || privateCase.test(background)) {
     return showError('案由触发隐私门禁。请删除敏感信息后再开庭。');
   }
-  if(!pass) return showError('请出示法庭通行令。');
+  const savedSession=!pass && courtSession();
+  if(!pass && !savedSession) return showError('请出示法庭通行令。');
   const language=lodgeLanguage || lang;
   lodging=true;
   $('#lodge-case').disabled=true;
@@ -945,7 +1036,7 @@ async function lodge() {
     let response, result={};
     try {
       response=await fetch(CLERK,{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',
-        body:JSON.stringify({charge,background,lang:language,case_id,pass})});
+        body:JSON.stringify({charge,background,lang:language,case_id,...(pass?{pass}:{session:savedSession})})});
       result=await response.json().catch(()=>({}));
     } catch {
       return showError('书记官未能立案，请重试。');
@@ -954,12 +1045,16 @@ async function lodge() {
       if(response.status===401) {
         $('#court-pass').value='';
         clearSession();
+        paintPassField();
         refreshHistory();
+        if(savedSession) return showError('记住的登录已失效，请重新输入法庭通行令。');
       }
       return showError(clerkErrors[result.error] || '书记官未能立案，请重试。');
     }
     if(result.session) saveSession(result.session);
     else clearStoredPass();
+    $('#court-pass').value='';
+    paintPassField();
     pending={case_id:result.case_id||case_id,submittedAt};
     try {localStorage.setItem('court-pending-case',JSON.stringify(pending));} catch {}
     waitingDesk(false);
@@ -990,6 +1085,7 @@ async function replay(id,freeze,filed=false,trial,reset=false) {
     Object.assign(stage.state,{whisper:false,strike:0,shake:0,reactionUntil:0,hasSpeech:false});
     transition=null;
     deliberated=false;
+    fastForward=false;
     stopBed();
     awaitingAsk=undefined;
     witnessQuestion=null;
@@ -1070,10 +1166,10 @@ function localize() {
     '#lodge-language':[t('庭审语言','Trial language')],
     '#lodge-case':[t('提交立案','Lodge the Case')],
     '#pass-label':[t('法庭通行令','Court pass')],
-    '#remember-label':[t('在此设备记住通行令','Remember the pass on this device')],
+    '#remember-label':[t('在此设备保持登录（30 天）','Stay signed in on this device (30 days)')],
     '#lodged-status':[lodgedSpeech()],
     '#fixture':[t('观看示范','Watch demo')],
-    '#skip':[t('跳过动画 / 看全文 ▾','Skip animation / Read all ▾')],
+    '#skip':[t('跳过动画 · 直接看判决 ⏭','Skip to the verdict ⏭')],
     '#sound':[soundOn?t('声音开启','Sound on'):t('声音关闭','Sound off')],
     '.mast a[href="#history"], #history h2':[t('历史案卷','Archive')],
     '#history .eyebrow':[t('案卷','Saved cases')],
@@ -1135,6 +1231,16 @@ $('#language').addEventListener('click',()=>{
 });
 soundWanted=readSoundPref();
 paintSound();
+if (soundWanted) {
+  const arm=event=>{
+    if (event.target?.closest?.('#sound')) return;
+    document.removeEventListener('pointerdown',arm,true);
+    document.removeEventListener('keydown',arm,true);
+    if (soundWanted && !soundOn) setSound(true);
+  };
+  document.addEventListener('pointerdown',arm,true);
+  document.addEventListener('keydown',arm,true);
+}
 $('#sound').addEventListener('click',event=>{
   event.preventDefault();
   setSound(!soundOn);
@@ -1144,10 +1250,19 @@ document.addEventListener('visibilitychange',()=>{
     if (sounds.murmur && !sounds.murmur.paused) sounds.murmur.pause();
   } else if (soundOn && bedWanted && !frozen) startBed();
 });
+function paintSkip() {
+  const button=$('#skip');
+  if(button) button.hidden=!playing || frozen;
+}
 $('#skip').addEventListener('click',()=>{
+  fastForward=true;
+  stopBed();
+  stage.state.whisper=false;
   stage.state.speechStart=-Infinity;
   stage.state.reactionUntil=stage.state.strike=stage.state.shake=0;
+  showStamp(null);
   finishFrame?.();
+  if(!playing && current?.verdict && !frozen) {fastForward=false;renderVerdict(current.verdict);$('#verdict').scrollIntoView({block:'start'});}
 });
 $('#case').addEventListener('input',updateCase);
 $('#case-form').addEventListener('submit',event=>{event.preventDefault();if(replayOnly) lodge();else submit(false);});
@@ -1165,7 +1280,8 @@ if(replayOnly) {
   try {
     legacyPass=localStorage.getItem('court-pass') || '';
     clearStoredPass();
-    if(legacyPass || courtSession()) $('#remember-pass').checked=true;
+    $('#remember-pass').checked=true;
+    paintPassField();
   } catch {legacyPass='';}
   $('#court-pass').addEventListener('change',()=>{
     rejectedPollPass=undefined;
