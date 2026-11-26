@@ -17,11 +17,11 @@ let pollingId, historyRequest = 0, rejectedPollPass, retryPollAt = 0;
 const isPrivateId = id => /^[0-9a-f]{32}$/.test(id);
 const passPrompt = "请出示法庭通行令以查阅私人案卷。";
 let soundOn = false, soundWanted = false, archive, transition, deliberated = false;
-const SOUND_V='20261127b';
-const soundLevel={type:.14,answer:.16,ask:.18,placard:.18,ruling:.18,gavel:.28,objection:.3,gavel3:.34,gasp:.22,uproar:.24,murmur:.07,open:.5,pass:.32,fail:.32,hung:.28};
-const soundFile={gavel:'static/gavel.wav',type:'static/type.wav',objection:'static/objection.wav',gavel3:'static/gavel3.mp3',murmur:'static/murmur.mp3',gasp:'static/gasp.mp3',uproar:'static/uproar.mp3',pass:'static/verdict-pass.mp3',fail:'static/verdict-fail.mp3',hung:'static/verdict-hung.mp3',ask:'static/ask-pop.mp3',placard:'static/placard.mp3',ruling:'static/ruling.mp3',answer:'static/answer.mp3',open:'static/court-open.mp3'};
+const SOUND_V='20261127d';
+const soundLevel={type:.14,answer:.16,ask:.18,placard:.18,ruling:.18,gavel:.28,objection:.3,gavel3:.34,gasp:.22,uproar:.24,bed:.85,open:.95,close:.95,pass:.32,fail:.32,hung:.28};
+const soundFile={gavel:'static/gavel.wav',type:'static/type.wav',objection:'static/objection.wav',gavel3:'static/gavel3.mp3',bed:'static/court-bed.mp3',gasp:'static/gasp.mp3',uproar:'static/uproar.mp3',pass:'static/verdict-pass.mp3',fail:'static/verdict-fail.mp3',hung:'static/verdict-hung.mp3',ask:'static/ask-pop.mp3',placard:'static/placard.mp3',ruling:'static/ruling.mp3',answer:'static/answer.mp3',open:'static/court-open.mp3',close:'static/court-close.mp3'};
 const sounds={};
-let soundCtx, duckTimer, lastPlacard=0, bedWanted=false, fastForward=false;
+let soundCtx, duckTimer, lastPlacard=0, bedWanted=false, fastForward=false, closePlayed=false, bedTimer=0;
 
 const buffers={};
 let bedSource, bedGain, decoding;
@@ -30,7 +30,7 @@ function loadSound(name) {
   const node=new Audio(soundFile[name]+'?v='+SOUND_V);
   node.preload='auto';
   node.volume=soundLevel[name]??.24;
-  if (name==='murmur') node.loop=true;
+  if (name==='bed') node.loop=true;
   sounds[name]=node;
   return node;
 }
@@ -42,8 +42,25 @@ function decodeAll() {
   decoding=Promise.all(Object.entries(soundFile).map(([name,file])=>
     fetch(file+'?v='+SOUND_V).then(r=>r.arrayBuffer())
       .then(data=>new Promise((ok,no)=>soundCtx.decodeAudioData(data,ok,no)))
-      .then(buffer=>{buffers[name]=buffer;}).catch(()=>{})));
+      .then(buffer=>{buffers[name]=name==='bed'?prepareBedBuffer(buffer):buffer;}).catch(()=>{})));
   return decoding;
+}
+function prepareBedBuffer(buffer) {
+  // Recross the last 40 ms into the start so MP3 padding cannot click on loop.
+  if (!soundCtx || !buffer || buffer.length<2) return buffer;
+  const fade=Math.min(Math.floor(.04*buffer.sampleRate), Math.floor(buffer.length/8));
+  if (fade<16) return buffer;
+  const out=soundCtx.createBuffer(buffer.numberOfChannels, buffer.length, buffer.sampleRate);
+  for (let c=0;c<buffer.numberOfChannels;c++) {
+    const src=buffer.getChannelData(c), dst=out.getChannelData(c);
+    dst.set(src);
+    const n=src.length;
+    for (let i=0;i<fade;i++) {
+      const w=Math.sin(.5*Math.PI*i/fade), u=Math.cos(.5*Math.PI*i/fade);
+      dst[n-fade+i]=src[n-fade+i]*u+src[i]*w;
+    }
+  }
+  return out;
 }
 function webAudioReady(name) {
   return soundCtx && soundCtx.state==='running' && buffers[name];
@@ -61,7 +78,7 @@ function fadeBed(target, step=.03) {
     }
     return;
   }
-  const bed=sounds.murmur;
+  const bed=sounds.bed;
   if (!bed) return;
   const tick=()=>{
     const cur=bed.volume;
@@ -80,30 +97,39 @@ function fadeBed(target, step=.03) {
 function startBed() {
   bedWanted=true;
   if (!soundOn || frozen) return;
-  if (openPlaying()) {setTimeout(()=>{if(bedWanted) startBed();},Math.max(50,openUntil-performance.now()+30));return;}
-  if (webAudioReady('murmur')) {
-    if (sounds.murmur && !sounds.murmur.paused) {try{sounds.murmur.pause();}catch{}}
+  if (openPlaying()) {
+    clearTimeout(bedTimer);
+    bedTimer=setTimeout(()=>{if(bedWanted) startBed();},Math.max(50,openUntil-performance.now()+30));
+    return;
+  }
+  if (webAudioReady('bed')) {
+    if (sounds.bed && !sounds.bed.paused) {try{sounds.bed.pause();}catch{}}
     if (!bedSource) {
       bedGain=soundCtx.createGain();
       bedGain.gain.value=0;
       bedGain.connect(soundCtx.destination);
       bedSource=soundCtx.createBufferSource();
-      bedSource.buffer=buffers.murmur;
+      bedSource.buffer=buffers.bed;
       bedSource.loop=true;
+      bedSource.loopStart=0;
+      bedSource.loopEnd=buffers.bed.duration;
       bedSource.connect(bedGain);
       bedSource.start();
     }
-    fadeBed(soundLevel.murmur,.015);
+    fadeBed(soundLevel.bed,.015);
     return;
   }
-  const bed=loadSound('murmur');
+  const bed=loadSound('bed');
   if (bed.paused) {bed.volume=0;bed.play().catch(()=>{});}
-  fadeBed(soundLevel.murmur,.015);
+  fadeBed(soundLevel.bed,.015);
+  // Retry Web Audio once the buffer arrives so the loop uses the seamless buffer, not the MP3 element.
+  if (decoding) decoding.then(()=>{if(bedWanted&&soundOn&&!frozen&&!bedSource) startBed();});
 }
 function stopBed() {
   bedWanted=false;
+  clearTimeout(bedTimer);
   if (bedSource) fadeBed(0,.025);
-  const bed=sounds.murmur;
+  const bed=sounds.bed;
   if (bed && !bed.paused) {
     const saved=bedGain;
     bedGain=null;
@@ -114,15 +140,20 @@ function stopBed() {
 function duckBed() {
   if (!bedWanted || !soundOn) return;
   if (bedGain && soundCtx) {
-    bedGain.gain.cancelScheduledValues(soundCtx.currentTime);
-    bedGain.gain.setValueAtTime(Math.min(bedGain.gain.value,.02),soundCtx.currentTime);
+    const now=soundCtx.currentTime, cur=bedGain.gain.value;
+    if (bedGain.gain.cancelAndHoldAtTime) bedGain.gain.cancelAndHoldAtTime(now);
+    else {
+      bedGain.gain.cancelScheduledValues(now);
+      bedGain.gain.setValueAtTime(cur,now);
+    }
+    bedGain.gain.linearRampToValueAtTime(.02,now+.05);
   } else {
-    const bed=sounds.murmur;
+    const bed=sounds.bed;
     if (!bed || bed.paused) return;
     bed.volume=Math.min(bed.volume,.02);
   }
   clearTimeout(duckTimer);
-  duckTimer=setTimeout(()=>{if(bedWanted&&soundOn&&!frozen) fadeBed(soundLevel.murmur,.015);},500);
+  duckTimer=setTimeout(()=>{if(bedWanted&&soundOn&&!frozen) fadeBed(soundLevel.bed,.015);},500);
 }
 
 const sessions = {preview:['法庭预览','Court preview'],live:['实时庭审','Live trial'],fixture:['示范庭审','Demo trial'],
@@ -165,13 +196,14 @@ function stopOpen() {
   try {openStop?.();} catch {}
   openStop=null;
 }
-function tone(name) {
-  if (!soundOn || frozen || fastForward) return;
-  // The opening cue (6–9 s) owns the room: nothing else may cut across it.
-  if (openPlaying()) return;
-  if (name==='murmur') {startBed();return;}
+function tone(name, force) {
+  if (!soundOn || frozen) return;
+  if (!force && fastForward) return;
+  // The opening cue owns the room: nothing else may cut across it.
+  if (!force && openPlaying()) return;
+  if (name==='bed' || name==='murmur') {startBed();return;}
   if (name==='open') stopBed();
-  else duckBed();
+  else if (name!=='close') duckBed();
   window.__courtTones=(window.__courtTones||0)+1;
   if (webAudioReady(name)) {
     try {
@@ -184,7 +216,8 @@ function tone(name) {
       source.start();
       if (name==='open') {
         openUntil=performance.now()+buffers[name].duration*1000;
-        openStop=()=>source.stop();
+        openStop=()=>{try{source.stop();}catch{}};
+        source.onended=()=>{openUntil=0;openStop=null;if(bedWanted) startBed();};
       }
       return;
     } catch {}
@@ -195,14 +228,22 @@ function tone(name) {
     node.volume=soundLevel[name]??.24;
     if (name==='open') {
       openUntil=performance.now()+(Number.isFinite(src.duration)&&src.duration>0?src.duration:9)*1000;
-      openStop=()=>node.pause();
-      node.addEventListener('ended',()=>{openUntil=0;openStop=null;},{once:true});
+      openStop=()=>{try{node.pause();}catch{}};
+      node.addEventListener('ended',()=>{openUntil=0;openStop=null;if(bedWanted) startBed();},{once:true});
     }
     node.play().catch(()=>{if(name==='open'){openUntil=0;openStop=null;}src.currentTime=0;src.play().catch(()=>{});});
   } catch {
     src.currentTime=0;
     src.play().catch(()=>{});
   }
+}
+function playClose() {
+  if (frozen) {stopOpen();stopBed();return;}
+  if (closePlayed) {stopOpen();stopBed();return;}
+  closePlayed=true;
+  stopOpen();
+  stopBed();
+  if (soundOn) tone('close', true);
 }
 function tickPlacard() {
   const now=performance.now();
@@ -256,7 +297,7 @@ function unlockSound() {
   }
   loadAllSounds();
   for (const [name,node] of Object.entries(sounds)) {
-    if (name==='murmur' && bedWanted) continue;
+    if (name==='bed' && bedWanted) continue;
     try {
       node.muted=true;
       const played=node.play();
@@ -367,6 +408,7 @@ async function order(key) {
   stage.state.strike=now+460;
   stage.state.shake=now+330;
   tone(key==='rise'?'open':key==='verdict'?'gavel3':'gavel');
+  if (key==='rise' && !frozen) startBed();
   showStamp('order');
   await hold(stage.reduced.matches ? 280 : 540);
   showStamp(null);
@@ -387,7 +429,6 @@ async function deliberate() {
   if (!frozen) {
     await hold(stage.reduced.matches ? 300 : 1750);
     stage.state.whisper=false;
-    stopBed();
   }
 }
 function pointText(p,kind) {
@@ -798,12 +839,13 @@ async function perform(event) {
     await type(text,5200,{emotion:d.emotion,reactionText:d.sentence});
     current.verdict=d;
     if(frozen) renderVerdict(d);
+    else playClose();
   } else if(kind==='done') {
     setMotion('done');
     stage.state.active=null;
     stage.state.ceremony=false;
     stage.refreshTags();
-    if(current.verdict&&!frozen) renderVerdict(current.verdict);
+    if(current.verdict&&!frozen) {playClose();renderVerdict(current.verdict);}
     refreshHistory(true);
   } else if(kind==='error') {
     awaitingAsk=undefined;
@@ -813,6 +855,7 @@ async function perform(event) {
     phase('error');
     actor('clerk',null);
     setMotion('error');
+    stopBed();
     tone('ruling');
     showSpeech(()=>errorText(d.text));
     record(()=>t(...motions.error),event,()=>[{text:errorText(d.text)}]);
@@ -1158,6 +1201,7 @@ async function replay(id,freeze,filed=false,trial,reset=false) {
     transition=null;
     deliberated=false;
     fastForward=false;
+    closePlayed=false;
     stopOpen();
     stopBed();
     awaitingAsk=undefined;
@@ -1320,7 +1364,8 @@ $('#sound').addEventListener('click',event=>{
 });
 document.addEventListener('visibilitychange',()=>{
   if (document.hidden) {
-    if (sounds.murmur && !sounds.murmur.paused) sounds.murmur.pause();
+    if (bedSource) {try{bedSource.stop();}catch{} bedSource=bedGain=null;}
+    if (sounds.bed && !sounds.bed.paused) sounds.bed.pause();
   } else if (soundOn && bedWanted && !frozen) startBed();
 });
 function paintSkip() {
@@ -1330,7 +1375,7 @@ function paintSkip() {
 $('#skip').addEventListener('click',()=>{
   fastForward=true;
   stopOpen();
-  stopBed();
+  playClose();
   stage.state.whisper=false;
   stage.state.speechStart=-Infinity;
   stage.state.reactionUntil=stage.state.strike=stage.state.shake=0;
