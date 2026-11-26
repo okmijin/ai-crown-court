@@ -1,0 +1,1254 @@
+{
+  "id": "sample_trial",
+  "created_at": "2026-11-25T00:00:00+00:00",
+  "mode": "uk",
+  "case": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+  "case_display": {
+    "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+    "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+  },
+  "charge": "本案按现有陈述不能成立，不应按所描述的方式推进。",
+  "seats": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+  ],
+  "fixture": true,
+  "state": "done",
+  "opening": {
+    "prosecution": {
+      "speech": {
+        "zh": "法官阁下 · Your Honour，专业方向明确，但独立经营需要自己的客户来源。",
+        "en": "Your Honour, the specialism is clear, but an independent studio needs its own route to clients."
+      },
+      "concession": {
+        "zh": "专业方向可能有价值。",
+        "en": "The specialism may have value."
+      },
+      "points": [
+        {
+          "number": 1,
+          "kind": "fact",
+          "text": {
+            "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+            "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+          }
+        },
+        {
+          "number": 2,
+          "kind": "inference",
+          "text": {
+            "zh": "离开原机构后，可能需要从零建立销售渠道。",
+            "en": "Leaving the agency may mean building a sales channel from scratch."
+          }
+        },
+        {
+          "number": 3,
+          "kind": "inference",
+          "text": {
+            "zh": "只服务出海品牌可能让项目间隔更长。",
+            "en": "Serving only brands going overseas could increase gaps between projects."
+          }
+        }
+      ]
+    },
+    "defense": {
+      "speech": {
+        "zh": "法官阁下 · Your Honour，小工作室可以先用范围有限的项目验证需求。",
+        "en": "Your Honour, a small studio can test demand with a tightly scoped project."
+      },
+      "concession": {
+        "zh": "案由没有列出已经确认的客户。",
+        "en": "The record names no confirmed clients."
+      },
+      "points": [
+        {
+          "number": 1,
+          "kind": "fact",
+          "text": {
+            "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+            "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+          }
+        },
+        {
+          "number": 2,
+          "kind": "inference",
+          "text": {
+            "zh": "出海专长可以给潜在客户明确的选择理由。",
+            "en": "Overseas specialisation could give clients a clear reason to choose the studio."
+          }
+        },
+        {
+          "number": 3,
+          "kind": "inference",
+          "text": {
+            "zh": "独立工作室可能先从小项目开始。",
+            "en": "An independent studio could start with small projects."
+          }
+        }
+      ]
+    }
+  },
+  "rebuttal": {
+    "prosecution": {
+      "points": [
+        {
+          "number": 1,
+          "survives": true,
+          "response": {
+            "zh": "案由明确了目标客户。",
+            "en": "The case identifies the target customer."
+          }
+        },
+        {
+          "number": 2,
+          "survives": false,
+          "response": {
+            "zh": "明确定位本身不能证明需求。",
+            "en": "A clear pitch does not establish demand."
+          }
+        },
+        {
+          "number": 3,
+          "survives": false,
+          "response": {
+            "zh": "没有说明首个项目从哪里来。",
+            "en": "The opening gives no source for the first project."
+          }
+        }
+      ],
+      "issue": {
+        "zh": "现有描述是否给出了取得首个项目的路径？",
+        "en": "Does the proposal identify a route to the first project?"
+      }
+    },
+    "defense": {
+      "points": [
+        {
+          "number": 1,
+          "survives": true,
+          "response": {
+            "zh": "双方都承认工作室会独立经营。",
+            "en": "Both sides accept that the studio will be independent."
+          }
+        },
+        {
+          "number": 2,
+          "survives": true,
+          "response": {
+            "zh": "需要建立自己的获客渠道。",
+            "en": "The studio will need its own route to clients."
+          }
+        },
+        {
+          "number": 3,
+          "survives": false,
+          "response": {
+            "zh": "记录没有证明专注会延长项目间隔。",
+            "en": "The record does not establish that specialisation will lengthen gaps."
+          }
+        }
+      ],
+      "issue": {
+        "zh": "可否从有限试点开始？",
+        "en": "Could the studio start with a limited pilot?"
+      }
+    }
+  },
+  "jury": [
+    {
+      "seat": 0,
+      "vote": "guilty",
+      "reason": {
+        "zh": "依据控方开场第 2 点，没有首单价格，我无法判断独立业务是否撑得住。",
+        "en": "On Crown opening point 2, I cannot see how the studio supports itself without a price for its first job."
+      },
+      "deciding_fact": {
+        "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+        "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+      },
+      "would_flip_if": {
+        "zh": "取得一份明确价格的试单。",
+        "en": "Secure a pilot with a stated price."
+      },
+      "cites": [
+        {
+          "phase": "opening",
+          "side": "prosecution",
+          "point": 2
+        }
+      ],
+      "name": "会计师",
+      "english": "The Accountant"
+    },
+    {
+      "seat": 1,
+      "vote": "guilty",
+      "reason": {
+        "zh": "依据控方开场第 2 点，我第一次听说这个服务，还不知道怎么买。",
+        "en": "On Crown opening point 2, hearing about the studio for the first time, I would not know how to buy its services."
+      },
+      "deciding_fact": {
+        "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+        "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+      },
+      "would_flip_if": {
+        "zh": "让一位新客户确认购买步骤。",
+        "en": "Have a new client confirm the steps to purchase."
+      },
+      "cites": [
+        {
+          "phase": "opening",
+          "side": "prosecution",
+          "point": 2
+        }
+      ],
+      "name": "第一次买的顾客",
+      "english": "The First-Time Customer"
+    },
+    {
+      "seat": 2,
+      "vote": "guilty",
+      "reason": {
+        "zh": "依据控方开场第 2 点，我会先抢占这个细分市场的销售渠道。",
+        "en": "On Crown opening point 2, I would compete for the sales channels in this niche before the studio got established."
+      },
+      "deciding_fact": {
+        "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+        "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+      },
+      "would_flip_if": {
+        "zh": "与一家渠道伙伴签下试点协议。",
+        "en": "Sign a pilot agreement with a referral partner."
+      },
+      "cites": [
+        {
+          "phase": "opening",
+          "side": "prosecution",
+          "point": 2
+        }
+      ],
+      "name": "竞争对手",
+      "english": "The Competitor"
+    },
+    {
+      "seat": 3,
+      "vote": "guilty",
+      "reason": {
+        "zh": "依据控方开场第 2 点，控方指出的缺口具体影响能否照原计划推进。",
+        "en": "On Crown opening point 2, the gap identified by the Crown directly affects whether the plan can proceed as stated."
+      },
+      "deciding_fact": {
+        "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+        "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+      },
+      "would_flip_if": {
+        "zh": "提交一份已获客户确认的项目委托书。",
+        "en": "Produce a project brief accepted by a client."
+      },
+      "cites": [
+        {
+          "phase": "opening",
+          "side": "prosecution",
+          "point": 2
+        }
+      ],
+      "name": "退休法官",
+      "english": "The Retired Judge"
+    },
+    {
+      "seat": 4,
+      "vote": "guilty",
+      "reason": {
+        "zh": "依据控方开场第 2 点，如果没有容易讲给别人听的首个项目，我不会转介绍。",
+        "en": "On Crown opening point 2, I would not tell friends about it without a first project I could explain easily."
+      },
+      "deciding_fact": {
+        "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+        "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+      },
+      "would_flip_if": {
+        "zh": "让三位目标客户能复述试点内容。",
+        "en": "Ask three target clients to describe the pilot back to you."
+      },
+      "cites": [
+        {
+          "phase": "opening",
+          "side": "prosecution",
+          "point": 2
+        }
+      ],
+      "name": "青少年",
+      "english": "The Teenager"
+    },
+    {
+      "seat": 5,
+      "vote": "guilty",
+      "reason": {
+        "zh": "依据控方开场第 2 点，我看不出第一个项目怎样从需求走到交付。",
+        "en": "On Crown opening point 2, I cannot trace a path from a first client request to delivery."
+      },
+      "deciding_fact": {
+        "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+        "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+      },
+      "would_flip_if": {
+        "zh": "列出首单的交付步骤并与客户演练。",
+        "en": "Walk through the first delivery plan with a client."
+      },
+      "cites": [
+        {
+          "phase": "opening",
+          "side": "prosecution",
+          "point": 2
+        }
+      ],
+      "name": "工程师",
+      "english": "The Engineer"
+    },
+    {
+      "seat": 6,
+      "vote": "guilty",
+      "reason": {
+        "zh": "依据控方开场第 2 点，我需要知道开业第一周谁负责找活。",
+        "en": "On Crown opening point 2, I need to know who is bringing in work in week one."
+      },
+      "deciding_fact": {
+        "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+        "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+      },
+      "would_flip_if": {
+        "zh": "指定获客负责人并约好三次客户会谈。",
+        "en": "Name the lead for outreach and book three client meetings."
+      },
+      "cites": [
+        {
+          "phase": "opening",
+          "side": "prosecution",
+          "point": 2
+        }
+      ],
+      "name": "小企业主",
+      "english": "The Small-Business Owner"
+    },
+    {
+      "seat": 7,
+      "vote": "guilty",
+      "reason": {
+        "zh": "依据控方开场第 2 点，一个细分定位不能说明有多少品牌愿意购买。",
+        "en": "On Crown opening point 2, a niche tells me little about how many brands will buy."
+      },
+      "deciding_fact": {
+        "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+        "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+      },
+      "would_flip_if": {
+        "zh": "记录二十家目标品牌对同一报价的回应。",
+        "en": "Record responses from twenty prospects to the same offer."
+      },
+      "cites": [
+        {
+          "phase": "opening",
+          "side": "prosecution",
+          "point": 2
+        }
+      ],
+      "name": "统计学家",
+      "english": "The Statistician"
+    },
+    {
+      "seat": 8,
+      "vote": "guilty",
+      "reason": {
+        "zh": "依据控方开场第 2 点，在没有项目承诺前，我不愿把家庭时间押在全职启动上。",
+        "en": "On Crown opening point 2, I would not commit family time to a full-time launch before a client commits."
+      },
+      "deciding_fact": {
+        "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+        "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+      },
+      "would_flip_if": {
+        "zh": "安排一项明确工时的付费试点。",
+        "en": "Set up a paid pilot with agreed hours."
+      },
+      "cites": [
+        {
+          "phase": "opening",
+          "side": "prosecution",
+          "point": 2
+        }
+      ],
+      "name": "家长",
+      "english": "The Parent"
+    },
+    {
+      "seat": 9,
+      "vote": "guilty",
+      "reason": {
+        "zh": "依据控方开场第 2 点，我需要先看到可重复获客的一步。",
+        "en": "On Crown opening point 2, I want to see the first step in a repeatable way to attract clients."
+      },
+      "deciding_fact": {
+        "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+        "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+      },
+      "would_flip_if": {
+        "zh": "通过同一渠道找到两位试点客户。",
+        "en": "Find two pilot clients through the same channel."
+      },
+      "cites": [
+        {
+          "phase": "opening",
+          "side": "prosecution",
+          "point": 2
+        }
+      ],
+      "name": "投资人",
+      "english": "The Investor"
+    },
+    {
+      "seat": 10,
+      "vote": "not_guilty",
+      "reason": {
+        "zh": "依据辩方开场第 2 点，我认为明确的受众值得先测试。",
+        "en": "On Defence opening point 2, I think the defined audience merits a test."
+      },
+      "deciding_fact": {
+        "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+        "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+      },
+      "would_flip_if": {
+        "zh": "如果五位目标客户都无法理解服务价值，我会改票。",
+        "en": "I would flip if five target clients could not explain the value of the offer."
+      },
+      "cites": [
+        {
+          "phase": "opening",
+          "side": "defense",
+          "point": 2
+        }
+      ],
+      "name": "设计师",
+      "english": "The Designer"
+    },
+    {
+      "seat": 11,
+      "vote": "not_guilty",
+      "reason": {
+        "zh": "依据辩方开场第 3 点，记录不足以证明试点会因权责问题受阻。",
+        "en": "On Defence opening point 3, I see no evidence in the record that liability would block a pilot."
+      },
+      "deciding_fact": {
+        "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+        "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+      },
+      "would_flip_if": {
+        "zh": "若客户要求条款中有无法接受的无限责任，我会改票。",
+        "en": "I would flip if a client insisted on uncapped liability in the pilot agreement."
+      },
+      "cites": [
+        {
+          "phase": "opening",
+          "side": "defense",
+          "point": 3
+        }
+      ],
+      "name": "律师",
+      "english": "The Lawyer"
+    }
+  ],
+  "tally": {
+    "finding": "有罪",
+    "guilty": 10,
+    "acquitted": 2,
+    "abstained": 0
+  },
+  "verdict": {
+    "sentence": {
+      "zh": "陪审团达到多数门槛。现有描述缺少取得首单的路径；请先验证获客和交付，再决定是否独立开业。",
+      "en": "The jury reached the required majority. The proposal lacks a route to a first commission. Test acquisition and delivery before committing to the independent launch."
+    },
+    "basis": [
+      {
+        "text": {
+          "zh": "控方指出独立获客没有具体路径。",
+          "en": "The Crown identified the missing route to clients."
+        },
+        "cite": {
+          "phase": "opening",
+          "side": "prosecution",
+          "point": 2
+        }
+      },
+      {
+        "text": {
+          "zh": "辩方提出的小试点可以验证需求。",
+          "en": "The Defence identified a small pilot as a way to test demand."
+        },
+        "cite": {
+          "phase": "opening",
+          "side": "defense",
+          "point": 3
+        }
+      }
+    ],
+    "conditions": [
+      {
+        "zh": "取得一份明确价格的试单。",
+        "en": "Secure a pilot with a stated price."
+      },
+      {
+        "zh": "列出首单的交付步骤并与客户演练。",
+        "en": "Walk through the first delivery plan with a client."
+      },
+      {
+        "zh": "记录二十家目标品牌对同一报价的回应。",
+        "en": "Record responses from twenty prospects to the same offer."
+      }
+    ]
+  },
+  "events": [
+    {
+      "id": 1,
+      "type": "clerk",
+      "data": {
+        "phase": "opening",
+        "text": {
+          "zh": "全体起立 · All rise。英国皇家刑事法院开庭。指控：本案按现有陈述不能成立，不应按所描述的方式推进。",
+          "en": "All rise. The UK Crown Court is in session. Charge: The idea fails as stated and should not go ahead as described."
+        },
+        "ceremony": true
+      }
+    },
+    {
+      "id": 2,
+      "type": "clerk",
+      "data": {
+        "phase": "opening",
+        "text": {
+          "zh": "请控方（Crown）及辩方（Defence）依次陈词。",
+          "en": "The Crown and the Defence may address the court in turn."
+        },
+        "ceremony": false
+      }
+    },
+    {
+      "id": 3,
+      "type": "status",
+      "data": {
+        "phase": "opening",
+        "text": {
+          "zh": "书记员请双方准备…",
+          "en": "The clerk asks the parties to stand by…"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "opening",
+      "data": {
+        "side": "prosecution",
+        "speech": {
+          "zh": "法官阁下 · Your Honour，专业方向明确，但独立经营需要自己的客户来源。",
+          "en": "Your Honour, the specialism is clear, but an independent studio needs its own route to clients."
+        },
+        "concession": {
+          "zh": "专业方向可能有价值。",
+          "en": "The specialism may have value."
+        },
+        "points": [
+          {
+            "number": 1,
+            "kind": "fact",
+            "text": {
+              "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+              "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+            }
+          },
+          {
+            "number": 2,
+            "kind": "inference",
+            "text": {
+              "zh": "离开原机构后，可能需要从零建立销售渠道。",
+              "en": "Leaving the agency may mean building a sales channel from scratch."
+            }
+          },
+          {
+            "number": 3,
+            "kind": "inference",
+            "text": {
+              "zh": "只服务出海品牌可能让项目间隔更长。",
+              "en": "Serving only brands going overseas could increase gaps between projects."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "type": "status",
+      "data": {
+        "phase": "opening",
+        "text": {
+          "zh": "书记员请双方准备…",
+          "en": "The clerk asks the parties to stand by…"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "type": "opening",
+      "data": {
+        "side": "defense",
+        "speech": {
+          "zh": "法官阁下 · Your Honour，小工作室可以先用范围有限的项目验证需求。",
+          "en": "Your Honour, a small studio can test demand with a tightly scoped project."
+        },
+        "concession": {
+          "zh": "案由没有列出已经确认的客户。",
+          "en": "The record names no confirmed clients."
+        },
+        "points": [
+          {
+            "number": 1,
+            "kind": "fact",
+            "text": {
+              "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+              "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+            }
+          },
+          {
+            "number": 2,
+            "kind": "inference",
+            "text": {
+              "zh": "出海专长可以给潜在客户明确的选择理由。",
+              "en": "Overseas specialisation could give clients a clear reason to choose the studio."
+            }
+          },
+          {
+            "number": 3,
+            "kind": "inference",
+            "text": {
+              "zh": "独立工作室可能先从小项目开始。",
+              "en": "An independent studio could start with small projects."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": 7,
+      "type": "clerk",
+      "data": {
+        "phase": "rebuttal",
+        "text": {
+          "zh": "现在进入交叉质询。",
+          "en": "The court will now hear cross-examination."
+        },
+        "ceremony": false
+      }
+    },
+    {
+      "id": 8,
+      "type": "status",
+      "data": {
+        "phase": "rebuttal",
+        "text": {
+          "zh": "书记员请双方准备…",
+          "en": "The clerk asks the parties to stand by…"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "type": "rebuttal",
+      "data": {
+        "side": "prosecution",
+        "points": [
+          {
+            "number": 1,
+            "survives": true,
+            "response": {
+              "zh": "案由明确了目标客户。",
+              "en": "The case identifies the target customer."
+            }
+          },
+          {
+            "number": 2,
+            "survives": false,
+            "response": {
+              "zh": "明确定位本身不能证明需求。",
+              "en": "A clear pitch does not establish demand."
+            }
+          },
+          {
+            "number": 3,
+            "survives": false,
+            "response": {
+              "zh": "没有说明首个项目从哪里来。",
+              "en": "The opening gives no source for the first project."
+            }
+          }
+        ],
+        "issue": {
+          "zh": "现有描述是否给出了取得首个项目的路径？",
+          "en": "Does the proposal identify a route to the first project?"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "type": "status",
+      "data": {
+        "phase": "rebuttal",
+        "text": {
+          "zh": "书记员请双方准备…",
+          "en": "The clerk asks the parties to stand by…"
+        }
+      }
+    },
+    {
+      "id": 11,
+      "type": "rebuttal",
+      "data": {
+        "side": "defense",
+        "points": [
+          {
+            "number": 1,
+            "survives": true,
+            "response": {
+              "zh": "双方都承认工作室会独立经营。",
+              "en": "Both sides accept that the studio will be independent."
+            }
+          },
+          {
+            "number": 2,
+            "survives": true,
+            "response": {
+              "zh": "需要建立自己的获客渠道。",
+              "en": "The studio will need its own route to clients."
+            }
+          },
+          {
+            "number": 3,
+            "survives": false,
+            "response": {
+              "zh": "记录没有证明专注会延长项目间隔。",
+              "en": "The record does not establish that specialisation will lengthen gaps."
+            }
+          }
+        ],
+        "issue": {
+          "zh": "可否从有限试点开始？",
+          "en": "Could the studio start with a limited pilot?"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "type": "clerk",
+      "data": {
+        "phase": "summing",
+        "text": {
+          "zh": "请法官总结 · Summing-up。",
+          "en": "The judge will now give the summing-up."
+        },
+        "ceremony": false
+      }
+    },
+    {
+      "id": 13,
+      "type": "status",
+      "data": {
+        "phase": "summing",
+        "text": {
+          "zh": "书记员请双方准备…",
+          "en": "The clerk asks the parties to stand by…"
+        }
+      }
+    },
+    {
+      "id": 14,
+      "type": "summing",
+      "data": {
+        "speech": {
+          "zh": "陪审团各位成员 · Members of the jury，控方指出获客路径未交代，辩方提出可小规模试点。举证责任在控方。请区分原文事实与推断，只根据庭审记录裁决。",
+          "en": "Members of the jury, the Crown points to the missing route to clients. The Defence proposes a small pilot. The burden is on the Crown. Distinguish inference from fact and decide solely on the record."
+        }
+      }
+    },
+    {
+      "id": 15,
+      "type": "clerk",
+      "data": {
+        "phase": "jury",
+        "text": {
+          "zh": "陪审团各位成员 · Members of the jury，请根据记录评议。",
+          "en": "Members of the jury, please deliberate on the record."
+        },
+        "ceremony": false
+      }
+    },
+    {
+      "id": 16,
+      "type": "status",
+      "data": {
+        "phase": "jury",
+        "text": {
+          "zh": "书记员请双方准备…",
+          "en": "The clerk asks the parties to stand by…"
+        }
+      }
+    },
+    {
+      "id": 17,
+      "type": "juror",
+      "data": {
+        "seat": 0,
+        "vote": "guilty",
+        "reason": {
+          "zh": "依据控方开场第 2 点，没有首单价格，我无法判断独立业务是否撑得住。",
+          "en": "On Crown opening point 2, I cannot see how the studio supports itself without a price for its first job."
+        },
+        "deciding_fact": {
+          "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+          "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+        },
+        "would_flip_if": {
+          "zh": "取得一份明确价格的试单。",
+          "en": "Secure a pilot with a stated price."
+        },
+        "cites": [
+          {
+            "phase": "opening",
+            "side": "prosecution",
+            "point": 2
+          }
+        ],
+        "name": "会计师",
+        "english": "The Accountant"
+      }
+    },
+    {
+      "id": 18,
+      "type": "juror",
+      "data": {
+        "seat": 1,
+        "vote": "guilty",
+        "reason": {
+          "zh": "依据控方开场第 2 点，我第一次听说这个服务，还不知道怎么买。",
+          "en": "On Crown opening point 2, hearing about the studio for the first time, I would not know how to buy its services."
+        },
+        "deciding_fact": {
+          "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+          "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+        },
+        "would_flip_if": {
+          "zh": "让一位新客户确认购买步骤。",
+          "en": "Have a new client confirm the steps to purchase."
+        },
+        "cites": [
+          {
+            "phase": "opening",
+            "side": "prosecution",
+            "point": 2
+          }
+        ],
+        "name": "第一次买的顾客",
+        "english": "The First-Time Customer"
+      }
+    },
+    {
+      "id": 19,
+      "type": "juror",
+      "data": {
+        "seat": 2,
+        "vote": "guilty",
+        "reason": {
+          "zh": "依据控方开场第 2 点，我会先抢占这个细分市场的销售渠道。",
+          "en": "On Crown opening point 2, I would compete for the sales channels in this niche before the studio got established."
+        },
+        "deciding_fact": {
+          "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+          "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+        },
+        "would_flip_if": {
+          "zh": "与一家渠道伙伴签下试点协议。",
+          "en": "Sign a pilot agreement with a referral partner."
+        },
+        "cites": [
+          {
+            "phase": "opening",
+            "side": "prosecution",
+            "point": 2
+          }
+        ],
+        "name": "竞争对手",
+        "english": "The Competitor"
+      }
+    },
+    {
+      "id": 20,
+      "type": "juror",
+      "data": {
+        "seat": 3,
+        "vote": "guilty",
+        "reason": {
+          "zh": "依据控方开场第 2 点，控方指出的缺口具体影响能否照原计划推进。",
+          "en": "On Crown opening point 2, the gap identified by the Crown directly affects whether the plan can proceed as stated."
+        },
+        "deciding_fact": {
+          "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+          "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+        },
+        "would_flip_if": {
+          "zh": "提交一份已获客户确认的项目委托书。",
+          "en": "Produce a project brief accepted by a client."
+        },
+        "cites": [
+          {
+            "phase": "opening",
+            "side": "prosecution",
+            "point": 2
+          }
+        ],
+        "name": "退休法官",
+        "english": "The Retired Judge"
+      }
+    },
+    {
+      "id": 21,
+      "type": "juror",
+      "data": {
+        "seat": 4,
+        "vote": "guilty",
+        "reason": {
+          "zh": "依据控方开场第 2 点，如果没有容易讲给别人听的首个项目，我不会转介绍。",
+          "en": "On Crown opening point 2, I would not tell friends about it without a first project I could explain easily."
+        },
+        "deciding_fact": {
+          "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+          "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+        },
+        "would_flip_if": {
+          "zh": "让三位目标客户能复述试点内容。",
+          "en": "Ask three target clients to describe the pilot back to you."
+        },
+        "cites": [
+          {
+            "phase": "opening",
+            "side": "prosecution",
+            "point": 2
+          }
+        ],
+        "name": "青少年",
+        "english": "The Teenager"
+      }
+    },
+    {
+      "id": 22,
+      "type": "juror",
+      "data": {
+        "seat": 5,
+        "vote": "guilty",
+        "reason": {
+          "zh": "依据控方开场第 2 点，我看不出第一个项目怎样从需求走到交付。",
+          "en": "On Crown opening point 2, I cannot trace a path from a first client request to delivery."
+        },
+        "deciding_fact": {
+          "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+          "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+        },
+        "would_flip_if": {
+          "zh": "列出首单的交付步骤并与客户演练。",
+          "en": "Walk through the first delivery plan with a client."
+        },
+        "cites": [
+          {
+            "phase": "opening",
+            "side": "prosecution",
+            "point": 2
+          }
+        ],
+        "name": "工程师",
+        "english": "The Engineer"
+      }
+    },
+    {
+      "id": 23,
+      "type": "juror",
+      "data": {
+        "seat": 6,
+        "vote": "guilty",
+        "reason": {
+          "zh": "依据控方开场第 2 点，我需要知道开业第一周谁负责找活。",
+          "en": "On Crown opening point 2, I need to know who is bringing in work in week one."
+        },
+        "deciding_fact": {
+          "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+          "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+        },
+        "would_flip_if": {
+          "zh": "指定获客负责人并约好三次客户会谈。",
+          "en": "Name the lead for outreach and book three client meetings."
+        },
+        "cites": [
+          {
+            "phase": "opening",
+            "side": "prosecution",
+            "point": 2
+          }
+        ],
+        "name": "小企业主",
+        "english": "The Small-Business Owner"
+      }
+    },
+    {
+      "id": 24,
+      "type": "juror",
+      "data": {
+        "seat": 7,
+        "vote": "guilty",
+        "reason": {
+          "zh": "依据控方开场第 2 点，一个细分定位不能说明有多少品牌愿意购买。",
+          "en": "On Crown opening point 2, a niche tells me little about how many brands will buy."
+        },
+        "deciding_fact": {
+          "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+          "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+        },
+        "would_flip_if": {
+          "zh": "记录二十家目标品牌对同一报价的回应。",
+          "en": "Record responses from twenty prospects to the same offer."
+        },
+        "cites": [
+          {
+            "phase": "opening",
+            "side": "prosecution",
+            "point": 2
+          }
+        ],
+        "name": "统计学家",
+        "english": "The Statistician"
+      }
+    },
+    {
+      "id": 25,
+      "type": "juror",
+      "data": {
+        "seat": 8,
+        "vote": "guilty",
+        "reason": {
+          "zh": "依据控方开场第 2 点，在没有项目承诺前，我不愿把家庭时间押在全职启动上。",
+          "en": "On Crown opening point 2, I would not commit family time to a full-time launch before a client commits."
+        },
+        "deciding_fact": {
+          "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+          "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+        },
+        "would_flip_if": {
+          "zh": "安排一项明确工时的付费试点。",
+          "en": "Set up a paid pilot with agreed hours."
+        },
+        "cites": [
+          {
+            "phase": "opening",
+            "side": "prosecution",
+            "point": 2
+          }
+        ],
+        "name": "家长",
+        "english": "The Parent"
+      }
+    },
+    {
+      "id": 26,
+      "type": "juror",
+      "data": {
+        "seat": 9,
+        "vote": "guilty",
+        "reason": {
+          "zh": "依据控方开场第 2 点，我需要先看到可重复获客的一步。",
+          "en": "On Crown opening point 2, I want to see the first step in a repeatable way to attract clients."
+        },
+        "deciding_fact": {
+          "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+          "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+        },
+        "would_flip_if": {
+          "zh": "通过同一渠道找到两位试点客户。",
+          "en": "Find two pilot clients through the same channel."
+        },
+        "cites": [
+          {
+            "phase": "opening",
+            "side": "prosecution",
+            "point": 2
+          }
+        ],
+        "name": "投资人",
+        "english": "The Investor"
+      }
+    },
+    {
+      "id": 27,
+      "type": "juror",
+      "data": {
+        "seat": 10,
+        "vote": "not_guilty",
+        "reason": {
+          "zh": "依据辩方开场第 2 点，我认为明确的受众值得先测试。",
+          "en": "On Defence opening point 2, I think the defined audience merits a test."
+        },
+        "deciding_fact": {
+          "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+          "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+        },
+        "would_flip_if": {
+          "zh": "如果五位目标客户都无法理解服务价值，我会改票。",
+          "en": "I would flip if five target clients could not explain the value of the offer."
+        },
+        "cites": [
+          {
+            "phase": "opening",
+            "side": "defense",
+            "point": 2
+          }
+        ],
+        "name": "设计师",
+        "english": "The Designer"
+      }
+    },
+    {
+      "id": 28,
+      "type": "juror",
+      "data": {
+        "seat": 11,
+        "vote": "not_guilty",
+        "reason": {
+          "zh": "依据辩方开场第 3 点，记录不足以证明试点会因权责问题受阻。",
+          "en": "On Defence opening point 3, I see no evidence in the record that liability would block a pilot."
+        },
+        "deciding_fact": {
+          "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+          "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+        },
+        "would_flip_if": {
+          "zh": "若客户要求条款中有无法接受的无限责任，我会改票。",
+          "en": "I would flip if a client insisted on uncapped liability in the pilot agreement."
+        },
+        "cites": [
+          {
+            "phase": "opening",
+            "side": "defense",
+            "point": 3
+          }
+        ],
+        "name": "律师",
+        "english": "The Lawyer"
+      }
+    },
+    {
+      "id": 29,
+      "type": "tally",
+      "data": {
+        "finding": "有罪",
+        "guilty": 10,
+        "acquitted": 2,
+        "abstained": 0
+      }
+    },
+    {
+      "id": 30,
+      "type": "clerk",
+      "data": {
+        "phase": "judge",
+        "text": {
+          "zh": "全体起立 · All rise。请法官宣判。",
+          "en": "All rise. The judge will deliver the verdict."
+        },
+        "ceremony": true
+      }
+    },
+    {
+      "id": 31,
+      "type": "status",
+      "data": {
+        "phase": "judge",
+        "text": {
+          "zh": "书记员请双方准备…",
+          "en": "The clerk asks the parties to stand by…"
+        }
+      }
+    },
+    {
+      "id": 32,
+      "type": "verdict",
+      "data": {
+        "sentence": {
+          "zh": "陪审团达到多数门槛。现有描述缺少取得首单的路径；请先验证获客和交付，再决定是否独立开业。",
+          "en": "The jury reached the required majority. The proposal lacks a route to a first commission. Test acquisition and delivery before committing to the independent launch."
+        },
+        "basis": [
+          {
+            "text": {
+              "zh": "控方指出独立获客没有具体路径。",
+              "en": "The Crown identified the missing route to clients."
+            },
+            "cite": {
+              "phase": "opening",
+              "side": "prosecution",
+              "point": 2
+            }
+          },
+          {
+            "text": {
+              "zh": "辩方提出的小试点可以验证需求。",
+              "en": "The Defence identified a small pilot as a way to test demand."
+            },
+            "cite": {
+              "phase": "opening",
+              "side": "defense",
+              "point": 3
+            }
+          }
+        ],
+        "conditions": [
+          {
+            "zh": "取得一份明确价格的试单。",
+            "en": "Secure a pilot with a stated price."
+          },
+          {
+            "zh": "列出首单的交付步骤并与客户演练。",
+            "en": "Walk through the first delivery plan with a client."
+          },
+          {
+            "zh": "记录二十家目标品牌对同一报价的回应。",
+            "en": "Record responses from twenty prospects to the same offer."
+          }
+        ]
+      }
+    },
+    {
+      "id": 33,
+      "type": "done",
+      "data": {}
+    }
+  ],
+  "calls": [],
+  "summing": {
+    "speech": {
+      "zh": "陪审团各位成员 · Members of the jury，控方指出获客路径未交代，辩方提出可小规模试点。举证责任在控方。请区分原文事实与推断，只根据庭审记录裁决。",
+      "en": "Members of the jury, the Crown points to the missing route to clients. The Defence proposes a small pilot. The burden is on the Crown. Distinguish inference from fact and decide solely on the record."
+    }
+  }
+}

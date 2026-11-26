@@ -1,0 +1,17 @@
+[
+  {
+    "id": "sample_trial",
+    "time": "2026-11-25T00:00:00+00:00",
+    "mode": "uk",
+    "summary": {
+      "zh": "广告创意总监离开 4A，做独立创意工作室，专做中国品牌出海",
+      "en": "An advertising creative director leaves a 4A agency to start an independent creative studio specialising in taking Chinese brands overseas."
+    },
+    "finding": "有罪",
+    "score": [
+      10,
+      2
+    ],
+    "state": "done"
+  }
+]

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta name="robots" content="noindex, nofollow">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#171c29">
+  <title>AI 法庭 · The Courtroom</title>
+  <link rel="stylesheet" href="static/court.css?v=20261126s">
+  <script defer src="static/locale.js?v=20261126s"></script>
+  <script defer src="static/stage.js?v=20261126s"></script>
+  <script defer src="static/court.js?v=20261126s"></script>
+</head>
+<body data-replay="true">
+  <header class="mast">
+    <a class="brand" href="/"><span class="brand-icon" aria-hidden="true"></span><span>AI 法庭<small>THE COURTROOM</small></span></a>
+    <nav aria-label="法庭工具">
+      <button type="button" id="language" aria-label="Language">中文 / English</button>
+      <button type="button" id="sound" aria-pressed="false">声音关闭</button>
+      <a href="#history">历史案卷</a>
+    </nav>
+  </header>
+  <main id="court">
+    <div class="layout">
+      <section id="petition" class="petition">
+        <div class="eyebrow">CASE INTAKE</div>
+        <h1>提交案由</h1>
+        <p class="intro">让控辩双方交锋，由独立陪审团裁决。</p>
+        <form id="case-form">
+          <label for="case">案由</label>
+          <textarea id="case" name="case" rows="5" required placeholder="写下一个想法，以及你打算怎么推进…"></textarea>
+          <div class="field-note"><span>请勿写入敏感信息</span><span id="count">0 / 2000</span></div>
+          <fieldset id="live-mode">
+            <legend>审理方式</legend>
+            <label><input type="radio" name="mode" value="uk" checked><span>英国皇家刑事法院<small>12 位陪审员 · 9 次调用 · 10–2 多数门槛</small></span></label>
+            <label><input type="radio" name="mode" value="full"><span>全审<small>12 位陪审员 · 17 次调用</small></span></label>
+          </fieldset>
+          <div id="lodge-desk" hidden>
+            <p id="clerk-title">书记官</p>
+            <label for="charge">案由</label>
+            <textarea id="charge" name="charge" rows="3" maxlength="200" required disabled></textarea>
+            <label for="background">案情陈述</label>
+            <textarea id="background" name="background" rows="3" maxlength="4000"></textarea>
+            <label for="court-pass" id="pass-label">法庭通行令</label>
+            <input id="court-pass" name="court-pass" type="password" autocomplete="current-password" maxlength="500" spellcheck="false">
+            <label class="remember"><input type="checkbox" id="remember-pass"><span id="remember-label">在此设备记住通行令</span></label>
+            <fieldset>
+              <legend id="lodge-language">庭审语言</legend>
+              <label><input type="radio" name="lodge-lang" value="zh" checked>中文</label>
+              <label><input type="radio" name="lodge-lang" value="en">English</label>
+            </fieldset>
+          </div>
+          <div class="actions">
+            <button id="start-trial" class="primary" type="submit">开庭 <span aria-hidden="true">▸</span></button>
+            <button id="lodge-case" class="primary" type="submit" hidden>提交立案</button>
+            <button class="outline" id="fixture" type="button">观看示范</button>
+          </div>
+          <p id="lodged-status" role="status" hidden>书记官已受理立案。首份案卷发布后即开始重播。</p>
+        </form>
+      </section>
+
+      <section class="theater" aria-label="像素法庭">
+        <div class="stage-header"><div><span class="lamp"></span><strong id="session-label">法庭预览</strong></div><span id="phase-label">候审</span></div>
+        <div class="picture">
+          <div id="stage-world">
+            <canvas id="stage" width="480" height="343" aria-label="法官居中，辩方居左，控方居右，十二席陪审团位于前方"></canvas>
+            <div id="stage-labels"></div>
+          </div>
+          <div id="objection" class="objection" hidden>异议！</div>
+        </div>
+        <div class="dialogue">
+          <div class="speaker"><strong id="speaker">书记员</strong><small id="speaker-en">CLERK</small></div>
+          <p id="speech">法庭已经准备就绪。提交案由，或观看一场示范庭审。</p>
+          <div class="dialogue-tools"><span id="motion-status" role="status"></span><button type="button" id="skip" hidden>跳过动画 / 看全文 <span aria-hidden="true">▾</span></button></div>
+        </div>
+        <nav id="steps" class="steps" aria-label="庭审阶段">
+          <span data-phase="opening">开场</span><span data-phase="rebuttal">反驳</span><span data-phase="summing">总结</span><span data-phase="jury">陪审团</span><span data-phase="judge">宣判</span>
+        </nav>
+      </section>
+
+      <aside id="transcript" hidden aria-label="书记员记录">
+        <header><div class="eyebrow">COURT RECORD</div><h2>书记员记录</h2><p id="case-text"></p></header>
+        <div id="entries" tabindex="0"></div>
+        <div class="record-footer"><nav id="freeze-links"></nav><a href="/">新一场庭审 <span aria-hidden="true">↗</span></a></div>
+      </aside>
+    </div>
+    <p class="error" id="form-error" role="alert" hidden></p>
+    <article id="verdict" hidden></article>
+    <section id="history">
+      <div><div class="eyebrow">ARCHIVE</div><h2>历史案卷</h2></div>
+      <div id="history-list">正在读取案卷…</div>
+    </section>
+  </main>
+  <footer class="footer"><span>本工具是结构化第二意见，并非法律或职业建议。</span><span>方法灵感来自 <a href="https://github.com/alexyc9381/court-skill">Alex Chen 的 /court skill（MIT）</a></span></footer>
+</body>
+</html>
